@@ -8,10 +8,18 @@ const Dashboard = () => {
   const features = [
     {
       id: 'product-update',
-      title: 'Update Product Otomatis',
+      title: 'Update Product Supplier Otomatis',
       description: 'Upload file Excel untuk update data produk secara otomatis ke SOCX API',
       icon: '📊',
       path: '/product-update',
+      status: 'active'
+    },
+    {
+      id: 'pulsa-transfer-update',
+      title: 'Update Pulsa Transfer Otomatis',
+      description: 'Kelola pot pulsa transfer untuk berbagai provider dan supplier',
+      icon: '📱',
+      path: '/pulsa-transfer-update',
       status: 'active'
     },
     {
@@ -139,6 +147,7 @@ const Dashboard = () => {
           <li>Atur Bearer Token di header aplikasi untuk mengakses SOCX API</li>
           <li>Pilih fitur yang ingin digunakan dari card di atas</li>
           <li>Untuk Update Product, upload file Excel dengan format yang sesuai</li>
+          <li>Untuk Pulsa Transfer, pilih provider, supplier, dan input pot yang diinginkan</li>
           <li>Data akan otomatis dikirim ke SOCX API menggunakan token yang telah diatur</li>
         </ol>
       </div>

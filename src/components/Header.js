@@ -59,6 +59,16 @@ const Header = () => {
             >
               Update Product
             </Link>
+            <Link
+              to="/pulsa-transfer-update"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/pulsa-transfer-update')
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Pulsa Transfer
+            </Link>
           </nav>
 
           {/* Bearer Token Section */}
