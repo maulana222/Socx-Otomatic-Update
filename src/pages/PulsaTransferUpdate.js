@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const PulsaTransferUpdate = () => {
   const { bearerToken } = useBearerToken();
@@ -15,6 +16,9 @@ const PulsaTransferUpdate = () => {
   const [showResults, setShowResults] = useState(false);
   const [allSuppliers, setAllSuppliers] = useState([]);
   const [supplierProducts, setSupplierProducts] = useState([]);
+  const [transferProducts, setTransferProducts] = useState([]);
+  const [supplierModuleMapping, setSupplierModuleMapping] = useState(new Map());
+  const [ourProductCodes, setOurProductCodes] = useState([]);
 
   // Data provider
   const providers = [
@@ -22,31 +26,36 @@ const PulsaTransferUpdate = () => {
       id: 1,
       name: 'Telkomsel',
       icon: '📞',
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      endpoint: 1 // /api/v1/products/filter/1/1
     },
     {
       id: 2,
       name: 'Indosat',
       icon: '📱',
-      color: 'bg-red-500'
+      color: 'bg-red-500',
+      endpoint: 2 // /api/v1/products/filter/1/2
     },
     {
       id: 3,
       name: 'XL Axiata',
       icon: '📶',
-      color: 'bg-purple-500'
+      color: 'bg-purple-500',
+      endpoint: 7 // /api/v1/products/filter/1/7
     },
     {
       id: 4,
       name: 'Tri',
       icon: '🌳',
-      color: 'bg-green-500'
+      color: 'bg-green-500',
+      endpoint: 9 // /api/v1/products/filter/1/9
     },
     {
       id: 5,
       name: 'Smartfren',
       icon: '📲',
-      color: 'bg-orange-500'
+      color: 'bg-orange-500',
+      endpoint: 6 // /api/v1/products/filter/1/5
     }
   ];
 
@@ -81,9 +90,13 @@ const PulsaTransferUpdate = () => {
         }
       );
 
+      // Get the correct endpoint for the selected provider
+      const providerData = providers.find(p => p.id === selectedProvider);
+      const endpoint = providerData ? providerData.endpoint : selectedProvider;
+      
       // Fetch products for the selected provider
       const productsResponse = await axios.get(
-        `https://indotechapi.socx.app/api/v1/products/filter/${selectedProvider}/1`,
+        `https://indotechapi.socx.app/api/v1/products/filter/1/${endpoint}`,
         {
           headers: {
             'Authorization': `Bearer ${bearerToken}`,
@@ -97,9 +110,16 @@ const PulsaTransferUpdate = () => {
         product.name.toLowerCase().includes('transfer')
       );
 
-      // Get unique supplier names from transfer products
+      // Store transfer products for later use (contains products_id for price update)
+      setTransferProducts(transferProducts);
+
+      // Get unique supplier names and their modules_id from transfer products
       const supplierNames = new Set();
-      for (const product of transferProducts) {
+      const supplierModuleMapping = new Map(); // Map supplier name to suppliers_modules_id
+      const ourProductCodesData = []; // Store our product codes and prices
+      
+      // Batch fetch suppliers for all products to reduce OPTIONS requests
+      const supplierPromises = transferProducts.map(async (product) => {
         try {
           const productSuppliersResponse = await axios.get(
             `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
@@ -111,14 +131,37 @@ const PulsaTransferUpdate = () => {
             }
           );
           
-          productSuppliersResponse.data.forEach(supplier => {
-            // Use supplier name to match
-            supplierNames.add(supplier.supplier);
-          });
+          return productSuppliersResponse.data;
         } catch (error) {
           console.error(`Error fetching suppliers for product ${product.id}:`, error);
+          return null;
         }
-      }
+      });
+      
+      // Wait for all requests to complete
+      const allSupplierResponses = await Promise.all(supplierPromises);
+      
+      // Process all responses
+      allSupplierResponses.forEach((supplierData, index) => {
+        if (supplierData && Array.isArray(supplierData)) {
+          supplierData.forEach(supplier => {
+            // Use supplier name to match
+            supplierNames.add(supplier.supplier);
+            // Store mapping: supplier name -> suppliers_modules_id
+            supplierModuleMapping.set(supplier.supplier, supplier.suppliers_modules_id);
+            
+            // Collect our product codes (products_code) and prices
+            ourProductCodesData.push({
+              products_code: supplier.products_code,
+              product_name: supplier.product_name,
+              base_price: supplier.base_price,
+              denom: extractDenomFromProductName(supplier.product_name)
+            });
+          });
+        } else {
+          console.warn(`No supplier data found for product ${transferProducts[index].id}`);
+        }
+      });
 
       // Filter suppliers that have transfer products for this provider
       const filteredSuppliers = suppliersResponse.data.filter(supplier => 
@@ -131,6 +174,8 @@ const PulsaTransferUpdate = () => {
       console.log('Filtered Suppliers:', filteredSuppliers);
 
       setAllSuppliers(filteredSuppliers);
+      setSupplierModuleMapping(supplierModuleMapping);
+      setOurProductCodes(ourProductCodesData);
     } catch (error) {
       console.error('Error fetching suppliers by provider:', error);
       setAllSuppliers([]);
@@ -140,9 +185,69 @@ const PulsaTransferUpdate = () => {
   };
 
   const fetchSupplierProducts = async () => {
+    if (!selectedSupplier) return;
+
     setIsLoadingProducts(true);
     try {
-      const response = await axios.get(
+      // Step 1: Get suppliers_products_id and product_code from products_has_suppliers_modules
+      const supplierModulePromises = transferProducts.map(async (product) => {
+        try {
+          const response = await axios.get(
+            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${bearerToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          // Find the selected supplier in the response
+          const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
+          const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
+          
+          console.log(`Processing product ${product.id}, looking for supplier: ${selectedSupplierName}`);
+          
+          // Check if response data exists and is an array
+          if (!response.data || !Array.isArray(response.data)) {
+            console.warn(`No supplier module data found for product ${product.id}`, response.data);
+            return null;
+          }
+          
+          console.log(`Found ${response.data.length} supplier modules for product ${product.id}`);
+          
+          const supplierModule = response.data.find(sm => sm.supplier === selectedSupplierName);
+          
+          if (supplierModule) {
+            return {
+              suppliers_products_id: supplierModule.suppliers_products_id,
+              product_code: supplierModule.product_code,
+              product_name: supplierModule.product_name,
+              base_price: supplierModule.base_price
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error fetching supplier module for product ${product.id}:`, error);
+          return null;
+        }
+      });
+      
+      const supplierModules = await Promise.all(supplierModulePromises);
+      const validModules = supplierModules.filter(module => module !== null);
+      
+      console.log('Valid supplier modules:', validModules);
+      
+      // Step 2: Get unique product codes (without numbers) for filtering
+      const productCodes = [...new Set(validModules.map(module => {
+        // Extract base code without numbers (e.g., "TTF10" -> "TTF")
+        return module.product_code.replace(/\d+/g, '');
+      }))];
+      
+      console.log('Product codes to filter:', productCodes);
+      
+      // Step 3: Fetch all supplier products and filter by product codes
+      const supplierProductsResponse = await axios.get(
         `https://indotechapi.socx.app/api/v1/suppliers_products/list/${selectedSupplier}`,
         {
           headers: {
@@ -152,18 +257,16 @@ const PulsaTransferUpdate = () => {
         }
       );
       
-      // Filter products that contain "TRANSFER" in name AND match the selected provider
-      const transferProducts = response.data.filter(product => {
-        const isTransfer = product.name.toLowerCase().includes('transfer');
-        const matchesProvider = product.name.toLowerCase().includes(selectedProviderData?.name.toLowerCase());
-        return isTransfer && matchesProvider;
+      // Filter products by product codes (without numbers)
+      const filteredProducts = supplierProductsResponse.data.filter(product => {
+        const productCodeBase = product.code.replace(/\d+/g, '');
+        return productCodes.includes(productCodeBase);
       });
       
-      console.log('All supplier products:', response.data);
-      console.log('Selected provider:', selectedProviderData?.name);
-      console.log('Filtered transfer products:', transferProducts);
+      console.log('All supplier products:', supplierProductsResponse.data);
+      console.log('Filtered products by code:', filteredProducts);
       
-      setSupplierProducts(transferProducts);
+      setSupplierProducts(filteredProducts);
     } catch (error) {
       console.error('Error fetching supplier products:', error);
       setSupplierProducts([]);
@@ -191,6 +294,161 @@ const PulsaTransferUpdate = () => {
     setShowResults(false);
   };
 
+  // Data biaya admin untuk Transfer (semua provider)
+  const transferRates = {
+    // Telkomsel Transfer
+    telkomsel: {
+      5: 7000,
+      10: 12000,
+      15: 17000,
+      20: 22750,
+      25: 27750,
+      30: 32750,
+      35: 37750,
+      40: 42750,
+      45: 47750,
+      50: 53250,
+      55: 58250,
+      60: 63250,
+      65: 68250,
+      70: 73250,
+      75: 78250,
+      80: 83250,
+      85: 88250,
+      90: 93250,
+      95: 98250,
+      100: 105500
+    },
+    // Indosat Transfer
+    indosat: {
+      5: 6000,
+      10: 11000,
+      15: 16000,
+      20: 21000,
+      25: 26500,
+      30: 31500,
+      35: 36500,
+      40: 41500,
+      45: 47000,
+      50: 52000,
+      55: 57000,
+      60: 62000,
+      65: 67000,
+      70: 72000,
+      75: 77000,
+      80: 82000,
+      85: 87000,
+      90: 92000,
+      95: 97000,
+      100: 104000,
+      105: 109000,
+      110: 114000,
+      115: 119000,
+      120: 124000,
+      125: 129000,
+      130: 134000,
+      135: 139000,
+      140: 144000,
+      145: 149000,
+      150: 154000,
+      155: 159000,
+      160: 164000,
+      165: 169000,
+      170: 174000,
+      175: 179000,
+      180: 184000,
+      185: 189000,
+      190: 194000,
+      195: 199000,
+      200: 204000
+    },
+    // Tri Transfer
+    tri: {
+      5: 6000,
+      10: 11000,
+      15: 16000,
+      20: 21000,
+      25: 26500,
+      30: 31500,
+      35: 36500,
+      40: 41500,
+      45: 47000,
+      50: 52000,
+      55: 57000,
+      60: 62000,
+      65: 67000,
+      70: 72000,
+      75: 77000,
+      80: 82000,
+      85: 87000,
+      90: 92000,
+      95: 97000,
+      100: 104000,
+      105: 109000,
+      110: 114000,
+      115: 119000,
+      120: 124000,
+      125: 129000,
+      130: 134000,
+      135: 139000,
+      140: 144000,
+      145: 149000,
+      150: 154000,
+      155: 159000,
+      160: 164000,
+      165: 169000,
+      170: 174000,
+      175: 179000,
+      180: 184000,
+      185: 189000,
+      190: 194000,
+      195: 199000,
+      200: 204000
+    }
+  };
+
+  const calculateModal = (adminFee, pot) => {
+    return adminFee - (adminFee * (pot / 100));
+  };
+
+  const calculateHargaJual = (adminFee, pot) => {
+    return adminFee - (adminFee * (pot / 100));
+  };
+
+  const calculateOurProductPrices = () => {
+    if (!supplierPot || !sellPot || ourProductCodes.length === 0) return [];
+    
+    const providerName = selectedProviderData?.name.toLowerCase();
+    const providerRates = transferRates[providerName] || transferRates.telkomsel;
+    
+    // Remove duplicates by using Map with products_code as key
+    const uniqueProducts = new Map();
+    
+    ourProductCodes.forEach(product => {
+      const adminFee = providerRates[product.denom];
+      if (!adminFee) return;
+      
+      const hargaJual = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
+      
+      // Use products_code as key to avoid duplicates
+      if (!uniqueProducts.has(product.products_code)) {
+        uniqueProducts.set(product.products_code, {
+          products_code: product.products_code,
+          harga_jual: hargaJual,
+          denom: product.denom
+        });
+      }
+    });
+    
+    return Array.from(uniqueProducts.values());
+  };
+
+  const extractDenomFromProductName = (productName) => {
+    // Extract denom from product name like "TELKOMSEL TRANSFER 5.000" -> 5
+    const match = productName.match(/(\d+)/);
+    return match ? parseInt(match[1]) : null;
+  };
+
   const calculateMargin = () => {
     const supplierPotNum = parseFloat(supplierPot);
     const sellPotNum = parseFloat(sellPot);
@@ -199,19 +457,114 @@ const PulsaTransferUpdate = () => {
     return { margin, marginPercent };
   };
 
+  const updateSupplierStatus = async (productsId, selectedSupplierName, token) => {
+    try {
+      // 1. Get all suppliers for this product
+      const response = await axios.get(
+        `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${productsId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const allSuppliers = response.data;
+      const statusResults = [];
+
+      console.log('All suppliers for product:', allSuppliers);
+      console.log('Selected supplier name:', selectedSupplierName);
+      console.log('Supplier module mapping:', supplierModuleMapping);
+
+      // 2. Batch update status for all suppliers to reduce OPTIONS requests
+      const updatePromises = allSuppliers.map(async (supplier) => {
+        try {
+          // Compare supplier names directly
+          const newStatus = supplier.supplier === selectedSupplierName ? 1 : 0;
+          
+          console.log(`Supplier: ${supplier.supplier}, Selected: ${selectedSupplierName}, New Status: ${newStatus}`);
+          
+          const updateResponse = await axios.patch(
+            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/${supplier.id}`,
+            {
+              id: supplier.id,
+              products_id: supplier.products_id,
+              products_code: supplier.products_code,
+              suppliers_products_id: supplier.suppliers_products_id,
+              status: newStatus,
+              priority: supplier.priority,
+              pending_limit: supplier.pending_limit,
+              suppliers_modules_id: supplier.suppliers_modules_id
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          return {
+            supplier_id: supplier.suppliers_modules_id,
+            supplier_name: supplier.supplier,
+            module: supplier.module,
+            status: newStatus,
+            response: updateResponse.data
+          };
+        } catch (error) {
+          return {
+            supplier_id: supplier.suppliers_modules_id,
+            supplier_name: supplier.supplier,
+            module: supplier.module,
+            status: 'error',
+            error: error.response?.data?.message || error.message
+          };
+        }
+      });
+      
+      // Wait for all updates to complete
+      const updateResults = await Promise.all(updatePromises);
+      statusResults.push(...updateResults);
+
+      return statusResults;
+    } catch (error) {
+      console.error('Error updating supplier status:', error);
+      return [{
+        status: 'error',
+        error: error.response?.data?.message || error.message
+      }];
+    }
+  };
+
   const processUpdate = async () => {
     if (!selectedProvider || !selectedSupplier || !supplierPot || !sellPot) {
-      alert('Harap lengkapi semua field');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Perhatian!',
+        text: 'Harap lengkapi semua field terlebih dahulu',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
     if (!bearerToken) {
-      alert('Harap set Bearer Token terlebih dahulu');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Perhatian!',
+        text: 'Harap set Bearer Token terlebih dahulu',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
     if (supplierProducts.length === 0) {
-      alert('Tidak ada produk transfer yang ditemukan untuk supplier ini');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Perhatian!',
+        text: 'Tidak ada produk transfer yang ditemukan untuk supplier ini',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
@@ -223,45 +576,128 @@ const PulsaTransferUpdate = () => {
       const { margin, marginPercent } = calculateMargin();
       const updateResults = [];
 
-      // Update semua produk transfer dari supplier
-      for (const product of supplierProducts) {
+      // Batch update semua produk transfer dari supplier to reduce OPTIONS requests
+      const productUpdatePromises = supplierProducts.map(async (product) => {
         try {
-          const response = await axios.post(
-            'https://indotechapi.socx.app/api/v1/suppliers_products',
-            {
-              base_price: product.base_price,
-              code: product.code,
-              name: product.name,
-              parameters: product.parameters || '',
-              regex_custom_info: product.regex_custom_info || '',
-              suppliers_id: selectedSupplier,
-              trx_per_day: product.trx_per_day
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          // Extract denom from product name
+          const denom = extractDenomFromProductName(product.name);
+          
+          // Get admin fee based on provider
+          const providerName = selectedProviderData?.name.toLowerCase();
+          const providerRates = transferRates[providerName] || transferRates.telkomsel;
+          const adminFee = providerRates[denom];
+          
+          if (!adminFee) {
+            return {
+              status: 'error',
+              product: product.name,
+              product_code: product.code,
+              error: `Biaya admin tidak ditemukan untuk denom ${denom}`
+            };
+          }
 
-          updateResults.push({
+          // Calculate new base_price (modal) based on supplier pot
+          const newBasePrice = Math.round(calculateModal(adminFee, parseFloat(supplierPot)));
+          
+          // Calculate new sell price based on sell pot
+          const newSellPrice = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
+
+          // Find the corresponding transfer product to get the correct products_id
+          const correspondingTransferProduct = transferProducts.find(tp => {
+            const tpDenom = extractDenomFromProductName(tp.name);
+            const productDenom = extractDenomFromProductName(product.name);
+            return tpDenom === productDenom && tp.name.toLowerCase().includes('transfer');
+          });
+
+          if (!correspondingTransferProduct) {
+            return {
+              status: 'error',
+              product: product.name,
+              product_code: product.code,
+              error: `Transfer product tidak ditemukan untuk denom ${denom}`
+            };
+          }
+
+          // Get selected supplier name from the supplier list
+          const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
+          const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
+
+          // Execute all updates in parallel
+          const [supplierProductResponse, productPriceResponse, supplierStatusResults] = await Promise.all([
+            // 1. Update supplier product (base_price) using PATCH
+            axios.patch(
+              `https://indotechapi.socx.app/api/v1/suppliers_products/${product.id}`,
+              {
+                id: product.id,
+                suppliers_id: selectedSupplier,
+                name: product.name,
+                code: product.code,
+                base_price: newBasePrice,
+                status: product.status,
+                parameters: product.parameters || '',
+                trx_per_day: product.trx_per_day,
+                regex_custom_info: product.regex_custom_info || '',
+                updated_time: Math.floor(Date.now() / 1000)
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            ),
+            // 2. Update product price (harga modal) using POST
+            axios.post(
+              'https://indotechapi.socx.app/api/v1/products/update_price',
+              {
+                id: correspondingTransferProduct.id,
+                price: newBasePrice // Gunakan harga modal, bukan harga jual
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            ),
+            // 3. Update supplier status
+            updateSupplierStatus(
+              correspondingTransferProduct.id,
+              selectedSupplierName,
+              bearerToken
+            )
+          ]);
+
+          return {
             status: 'success',
             product: product.name,
             product_code: product.code,
-            base_price: product.base_price,
-            response: response.data
-          });
+            denom: denom,
+            admin_fee: adminFee,
+            old_base_price: product.base_price,
+            new_base_price: newBasePrice,
+            new_sell_price: newSellPrice,
+            supplier_pot: parseFloat(supplierPot),
+            sell_pot: parseFloat(sellPot),
+            products_id: correspondingTransferProduct.id,
+            supplier_response: supplierProductResponse.data,
+            price_response: productPriceResponse.data, // Response dari update harga modal
+            supplier_status_results: supplierStatusResults,
+            selected_supplier_id: selectedSupplier
+          };
         } catch (error) {
-          updateResults.push({
+          return {
             status: 'error',
             product: product.name,
             product_code: product.code,
-            base_price: product.base_price,
             error: error.response?.data?.message || error.message
-          });
+          };
         }
-      }
+      });
+      
+      // Wait for all product updates to complete
+      const productUpdateResults = await Promise.all(productUpdatePromises);
+      updateResults.push(...productUpdateResults);
 
       setResults(updateResults);
       setShowResults(true);
@@ -282,6 +718,9 @@ const PulsaTransferUpdate = () => {
     setSupplierPot('');
     setSellPot('');
     setSupplierProducts([]);
+    setTransferProducts([]);
+    setSupplierModuleMapping(new Map());
+    setOurProductCodes([]);
     setResults([]);
     setShowResults(false);
   };
@@ -294,7 +733,7 @@ const PulsaTransferUpdate = () => {
           Update Pulsa Transfer Otomatis
         </h1>
         <p className="text-lg text-gray-600">
-          Kelola pot pulsa transfer untuk berbagai provider dan supplier
+          Kelola pot pulsa transfer, update harga modal, dan aktifkan supplier yang dipilih
         </p>
       </div>
 
@@ -496,28 +935,93 @@ const PulsaTransferUpdate = () => {
             </div>
           </div>
 
-          {/* Margin Calculation */}
-          {supplierPot && sellPot && (
+          {/* Preview Calculation */}
+          {supplierPot && sellPot && supplierProducts.length > 0 && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">Kalkulasi Margin</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-sm text-blue-700">Supplier Pot</p>
-                  <p className="text-2xl font-bold text-blue-900">{supplierPot}%</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-blue-700">Sell Pot</p>
-                  <p className="text-2xl font-bold text-blue-900">{sellPot}%</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-blue-700">Margin</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {calculateMargin().margin.toFixed(2)}%
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">Preview Kalkulasi</h3>
+              <div className="space-y-3">
+                {supplierProducts.slice(0, 3).map((product) => {
+                  const denom = extractDenomFromProductName(product.name);
+                  
+                  // Get admin fee based on provider
+                  const providerName = selectedProviderData?.name.toLowerCase();
+                  const providerRates = transferRates[providerName] || transferRates.telkomsel;
+                  const adminFee = providerRates[denom];
+                  
+                  if (!adminFee) return null;
+                  
+                  const newBasePrice = Math.round(calculateModal(adminFee, parseFloat(supplierPot)));
+                  const newSellPrice = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
+                  
+                  return (
+                    <div key={product.id} className="bg-white p-3 rounded border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm">{product.name}</p>
+                          <p className="text-xs text-gray-600">Admin: Rp {adminFee.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-green-600">Modal: Rp {newBasePrice.toLocaleString()}</p>
+                          <p className="text-sm font-semibold text-blue-600">Jual: Rp {newSellPrice.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {supplierProducts.length > 3 && (
+                  <p className="text-xs text-gray-600 text-center">
+                    ... dan {supplierProducts.length - 3} produk lainnya
                   </p>
-                </div>
+                )}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Our Product Codes and Prices */}
+      {selectedProvider && selectedSupplier && supplierPot && sellPot && ourProductCodes.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Kode Produk & Harga Jual ({selectedProviderData?.name})
+            </h3>
+            <button
+              onClick={() => {
+                const productPrices = calculateOurProductPrices();
+                const copyText = productPrices.map(p => `${p.products_code} ${p.harga_jual}`).join('\n');
+                navigator.clipboard.writeText(copyText);
+                
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Berhasil!',
+                  text: 'Data kode produk dan harga jual berhasil di-copy ke clipboard',
+                  timer: 2000,
+                  showConfirmButton: false,
+                  toast: true,
+                  position: 'top-end'
+                });
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Copy Semua
+            </button>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded border max-h-96 overflow-y-auto">
+            <div className="space-y-2">
+              {calculateOurProductPrices().map((product, index) => (
+                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
+                  <span className="font-mono text-sm font-semibold text-gray-800">
+                    {product.products_code}
+                  </span>
+                  <span className="text-sm font-semibold text-green-600">
+                    {product.harga_jual.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -547,7 +1051,7 @@ const PulsaTransferUpdate = () => {
                     : 'bg-primary-600 text-white hover:bg-primary-700'
                 }`}
               >
-                {isProcessing ? 'Processing...' : 'Update All Products'}
+                {isProcessing ? 'Processing...' : 'Update Modal & Aktifkan Supplier'}
               </button>
             </div>
           </div>
@@ -585,20 +1089,65 @@ const PulsaTransferUpdate = () => {
                         <p className="text-sm text-green-800 mb-2">
                           Berhasil update: {result.product} ({result.product_code})
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-gray-600">Product Code</p>
-                            <p className="font-semibold">{result.product_code}</p>
+                            <p className="text-gray-600">Denom</p>
+                            <p className="font-semibold">{result.denom}K</p>
                           </div>
                           <div>
-                            <p className="text-gray-600">Base Price</p>
-                            <p className="font-semibold">Rp {result.base_price?.toLocaleString()}</p>
+                            <p className="text-gray-600">Admin Fee</p>
+                            <p className="font-semibold">Rp {result.admin_fee?.toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-gray-600">Status</p>
-                            <p className="font-semibold text-green-600">Updated</p>
+                            <p className="text-gray-600">Modal (Base Price)</p>
+                            <p className="font-semibold">Rp {result.new_base_price?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">({result.supplier_pot}% pot)</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Harga Jual</p>
+                            <p className="font-semibold">Rp {result.new_sell_price?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">({result.sell_pot}% pot)</p>
                           </div>
                         </div>
+                        <div className="mt-2 text-xs text-gray-500 grid grid-cols-3 gap-4">
+                          <div>
+                            Modal lama: Rp {result.old_base_price?.toLocaleString()}
+                          </div>
+                          <div>
+                            Products ID: {result.products_id}
+                          </div>
+                          <div>
+                            Selected Supplier ID: {result.selected_supplier_id}
+                          </div>
+                        </div>
+                        <div className="mt-2 text-xs text-blue-600">
+                          📝 Update Price API: Rp {result.new_base_price?.toLocaleString()} (harga modal)
+                        </div>
+                        
+                        {/* Supplier Status Results */}
+                        {result.supplier_status_results && result.supplier_status_results.length > 0 && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded border">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">Status Supplier:</p>
+                            <div className="space-y-1">
+                              {result.supplier_status_results.map((statusResult, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-xs">
+                                  <span className="text-gray-600">
+                                    {statusResult.supplier_name} ({statusResult.module}) - ID: {statusResult.supplier_id}
+                                  </span>
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                    statusResult.status === 1 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : statusResult.status === 0 
+                                        ? 'bg-gray-100 text-gray-800'
+                                        : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {statusResult.status === 1 ? 'AKTIF' : statusResult.status === 0 ? 'NONAKTIF' : 'ERROR'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div>
@@ -652,3 +1201,4 @@ const PulsaTransferUpdate = () => {
 };
 
 export default PulsaTransferUpdate;
+
