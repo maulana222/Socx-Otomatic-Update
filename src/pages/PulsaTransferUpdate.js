@@ -38,7 +38,7 @@ const PulsaTransferUpdate = () => {
     },
     {
       id: 3,
-      name: 'XL Axiata',
+      name: 'XL',
       icon: '📶',
       color: 'bg-purple-500',
       endpoint: 7 // /api/v1/products/filter/1/7
@@ -404,6 +404,71 @@ const PulsaTransferUpdate = () => {
       190: 194000,
       195: 199000,
       200: 204000
+    },
+    // XL Axiata Transfer
+    xl: {
+      5: 6000,
+      10: 11000,
+      15: 16000,
+      20: 21000,
+      25: 26500,
+      30: 31500,
+      35: 36500,
+      40: 41500,
+      45: 47000,
+      50: 52000,
+      55: 57000,
+      60: 62000,
+      65: 67000,
+      70: 72000,
+      75: 77000,
+      80: 82000,
+      85: 87000,
+      90: 92000,
+      95: 97000,
+      100: 104000,
+      105: 109000,
+      110: 114000,
+      115: 119000,
+      120: 124000,
+      125: 129000,
+      130: 134000,
+      135: 139000,
+      140: 144000,
+      145: 149000,
+      150: 154000,
+      155: 159000,
+      160: 164000,
+      165: 169000,
+      170: 174000,
+      175: 179000,
+      180: 184000,
+      185: 189000,
+      190: 194000,
+      195: 199000,
+      200: 204000
+    },
+    // Smartfren Transfer
+    smartfren: {
+      5: 600,
+      10: 1100,
+      15: 1600,
+      20: 1600,
+      25: 2100,
+      30: 2100,
+      35: 2100,
+      40: 2100,
+      45: 2100,
+      50: 2100,
+      55: 2600,
+      60: 2600,
+      65: 2600,
+      70: 2600,
+      75: 2600,
+      80: 2600,
+      85: 2600,
+      90: 2600,
+      95: 2600
     }
   };
 
@@ -450,11 +515,37 @@ const PulsaTransferUpdate = () => {
   };
 
   const calculateMargin = () => {
+    if (!supplierPot || !sellPot || !selectedProvider) {
+      return { margin: 0, marginPercent: 0 };
+    }
+
     const supplierPotNum = parseFloat(supplierPot);
     const sellPotNum = parseFloat(sellPot);
-    const margin = supplierPotNum - sellPotNum;
-    const marginPercent = (margin / supplierPotNum) * 100;
-    return { margin, marginPercent };
+    
+    // Ambil admin fee dari provider yang dipilih (gunakan denom 5K sebagai contoh)
+    const providerName = selectedProviderData?.name.toLowerCase();
+    const providerRates = transferRates[providerName] || transferRates.telkomsel;
+    const adminFee = providerRates[5]; // Gunakan denom 5K sebagai referensi
+    
+    if (!adminFee) {
+      return { margin: 0, marginPercent: 0 };
+    }
+
+    // Hitung harga modal dan harga jual
+    const hargaModal = Math.round(calculateModal(adminFee, supplierPotNum));
+    const hargaJual = Math.round(calculateHargaJual(adminFee, sellPotNum));
+    
+    // Hitung margin dari selisih harga
+    const margin = hargaJual - hargaModal;
+    const marginPercent = hargaModal > 0 ? (margin / hargaModal) * 100 : 0;
+    
+    return { 
+      margin, 
+      marginPercent,
+      hargaModal,
+      hargaJual,
+      adminFee
+    };
   };
 
   const updateSupplierStatus = async (productsId, selectedSupplierName, token) => {
@@ -534,6 +625,56 @@ const PulsaTransferUpdate = () => {
         status: 'error',
         error: error.response?.data?.message || error.message
       }];
+    }
+  };
+
+  // Function to fetch resellers group pricing and get Level 1 ID
+  const fetchResellersGroupPricing = async (tipProduk, token) => {
+    try {
+      const response = await axios.get(
+        `https://indotechapi.socx.app/api/v1/resellers_group/pricing/${tipProduk}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Find Level 1 reseller group
+        const level1Group = response.data.find(group => group.name === 'Level 1');
+        return level1Group ? level1Group.id : null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching resellers group pricing:', error);
+      return null;
+    }
+  };
+
+  // Function to update markup for Level 1 reseller group
+  const updateMarkup = async (resellerGroupId, newMarkup, token) => {
+    try {
+      const response = await axios.post(
+        'https://indotechapi.socx.app/api/v1/resellers_group_has_products/update_markup',
+        {
+          id: resellerGroupId,
+          markup: newMarkup,
+          commissions: 0,
+          points: 0
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return { success: true, response: response.data };
+    } catch (error) {
+      console.error('Error updating markup:', error);
+      return { success: false, error: error.message };
     }
   };
 
@@ -622,8 +763,18 @@ const PulsaTransferUpdate = () => {
           const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
           const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
 
+          // Get tip produk from corresponding transfer product
+          const tipProduk = correspondingTransferProduct.tip_produk || correspondingTransferProduct.id;
+          
+          // Fetch resellers group pricing to get Level 1 ID
+          const level1ResellerGroupId = await fetchResellersGroupPricing(tipProduk, bearerToken);
+          
+          // Calculate markup based on actual price difference (harga jual - harga modal)
+          const actualMargin = newSellPrice - newBasePrice;
+          const markupPercentage = Math.round(actualMargin);
+
           // Execute all updates in parallel
-          const [supplierProductResponse, productPriceResponse, supplierStatusResults] = await Promise.all([
+          const [supplierProductResponse, productPriceResponse, supplierStatusResults, markupResult] = await Promise.all([
             // 1. Update supplier product (base_price) using PATCH
             axios.patch(
               `https://indotechapi.socx.app/api/v1/suppliers_products/${product.id}`,
@@ -665,7 +816,9 @@ const PulsaTransferUpdate = () => {
               correspondingTransferProduct.id,
               selectedSupplierName,
               bearerToken
-            )
+            ),
+            // 4. Update markup for Level 1 reseller group (if found)
+            level1ResellerGroupId ? updateMarkup(level1ResellerGroupId, markupPercentage, bearerToken) : Promise.resolve({ success: false, error: 'Level 1 reseller group not found' })
           ]);
 
           return {
@@ -679,10 +832,14 @@ const PulsaTransferUpdate = () => {
             new_sell_price: newSellPrice,
             supplier_pot: parseFloat(supplierPot),
             sell_pot: parseFloat(sellPot),
+            markup_percentage: markupPercentage,
+            tip_produk: tipProduk,
+            level1_reseller_group_id: level1ResellerGroupId,
             products_id: correspondingTransferProduct.id,
             supplier_response: supplierProductResponse.data,
             price_response: productPriceResponse.data, // Response dari update harga modal
             supplier_status_results: supplierStatusResults,
+            markup_result: markupResult, // Response dari update markup
             selected_supplier_id: selectedSupplier
           };
         } catch (error) {
@@ -948,10 +1105,21 @@ const PulsaTransferUpdate = () => {
                   const providerRates = transferRates[providerName] || transferRates.telkomsel;
                   const adminFee = providerRates[denom];
                   
+                  // Debug: log provider info
+                  console.log('Provider Debug:', {
+                    selectedProviderData: selectedProviderData,
+                    providerName: providerName,
+                    denom: denom,
+                    adminFee: adminFee,
+                    providerRates: providerRates
+                  });
+                  
                   if (!adminFee) return null;
                   
                   const newBasePrice = Math.round(calculateModal(adminFee, parseFloat(supplierPot)));
                   const newSellPrice = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
+                  const margin = newSellPrice - newBasePrice;
+                  const marginPercent = newBasePrice > 0 ? ((margin / newBasePrice) * 100).toFixed(2) : 0;
                   
                   return (
                     <div key={product.id} className="bg-white p-3 rounded border">
@@ -963,6 +1131,9 @@ const PulsaTransferUpdate = () => {
                         <div className="text-right">
                           <p className="text-sm font-semibold text-green-600">Modal: Rp {newBasePrice.toLocaleString()}</p>
                           <p className="text-sm font-semibold text-blue-600">Jual: Rp {newSellPrice.toLocaleString()}</p>
+                          <p className={`text-xs font-medium ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            Margin: Rp {margin.toLocaleString()} ({marginPercent}%)
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1089,7 +1260,7 @@ const PulsaTransferUpdate = () => {
                         <p className="text-sm text-green-800 mb-2">
                           Berhasil update: {result.product} ({result.product_code})
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                           <div>
                             <p className="text-gray-600">Denom</p>
                             <p className="font-semibold">{result.denom}K</p>
@@ -1108,6 +1279,15 @@ const PulsaTransferUpdate = () => {
                             <p className="font-semibold">Rp {result.new_sell_price?.toLocaleString()}</p>
                             <p className="text-xs text-gray-500">({result.sell_pot}% pot)</p>
                           </div>
+                          <div>
+                            <p className="text-gray-600">Margin</p>
+                            <p className={`font-semibold ${(result.new_sell_price - result.new_base_price) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              Rp {(result.new_sell_price - result.new_base_price)?.toLocaleString()}
+                            </p>
+                            <p className={`text-xs ${(result.new_sell_price - result.new_base_price) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              ({result.new_base_price > 0 ? (((result.new_sell_price - result.new_base_price) / result.new_base_price) * 100).toFixed(2) : 0}%)
+                            </p>
+                          </div>
                         </div>
                         <div className="mt-2 text-xs text-gray-500 grid grid-cols-3 gap-4">
                           <div>
@@ -1123,6 +1303,19 @@ const PulsaTransferUpdate = () => {
                         <div className="mt-2 text-xs text-blue-600">
                           📝 Update Price API: Rp {result.new_base_price?.toLocaleString()} (harga modal)
                         </div>
+                        
+                        {/* Markup Information */}
+                        {result.markup_result && (
+                          <div className="mt-2 text-xs text-purple-600">
+                            💰 Markup: {result.markup_percentage}% | 
+                            Tip Produk: {result.tip_produk} | 
+                            Level 1 ID: {result.level1_reseller_group_id || 'Not found'} | 
+                            Status: {result.markup_result.success ? '✅ Success' : '❌ Failed'}
+                            {!result.markup_result.success && result.markup_result.error && (
+                              <span className="text-red-600"> - {result.markup_result.error}</span>
+                            )}
+                          </div>
+                        )}
                         
                         {/* Supplier Status Results */}
                         {result.supplier_status_results && result.supplier_status_results.length > 0 && (
