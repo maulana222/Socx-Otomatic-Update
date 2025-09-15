@@ -1,195 +1,152 @@
-# SOCX Otomatic Update
+# 🚀 Script Update Produk SOCX Otomatis
 
-Platform untuk mengelola dan mengupdate data produk secara otomatis ke SOCX API menggunakan file Excel.
+Koleksi script Node.js untuk mengupdate produk **INDOSAT TRANSFER** dan **Free Fire** secara otomatis.
 
-## Fitur
+## 📁 Script yang Tersedia
 
-- **Update Product Otomatis**: Upload file Excel untuk update data produk ke SOCX API
-- **Bearer Token Management**: Kelola Bearer Token untuk autentikasi API
-- **Excel Validation**: Validasi format dan data Excel sebelum dikirim ke API
-- **Progress Tracking**: Monitor progress upload dan hasil processing
-- **Template Download**: Download template Excel yang sesuai dengan format yang dibutuhkan
+### 1. 📱 **INDOSAT Transfer** (`updateproductsupplierotomatis.js`)
+- **Supplier ID**: 36
+- **Provider**: INDOSAT
+- **Kode Produk**: ITB (ITB5, ITB10, ITB40, dll)
+- **Format Nama**: `INDOSAT TRANSFER {denom}.000`
 
-## Struktur Aplikasi
+### 2. 🎮 **Free Fire** (React UI)
+- **Category ID**: 8 (Game category)
+- **Provider ID**: 8 (Free Fire provider)
+- **Kode Produk**: GMFF (GMFF5, GMFF10, GMFF20, dll) dan FFP (FFP5, FFP10, dll)
+- **Formula**: Harga berdasarkan rate supplier dan harga jual
 
-```
-src/
-├── components/
-│   └── Header.js              # Header dengan navigasi dan Bearer Token input
-├── contexts/
-│   └── BearerTokenContext.js  # Context untuk mengelola Bearer Token
-├── pages/
-│   ├── Dashboard.js           # Halaman utama dengan card-card fitur
-│   └── ProductUpdate.js       # Halaman update product dengan upload Excel
-├── App.js                     # Komponen utama dengan routing
-├── index.js                   # Entry point aplikasi
-└── index.css                  # Styling utama dengan Tailwind CSS
+### 3. 🎮 **Tambah Produk Free Fire** (`addproduksupplier.js`)
+- **Supplier ID**: 33
+- **Kode Produk**: FFH (FFH10, FFH20, FFH100, dll)
+- **Format Nama**: `Free Fire {denom} Diamon`
+- **Total Produk**: 75 produk Free Fire
 
-public/
-├── index.html                 # HTML template
-└── manifest.json              # Web app manifest
-```
+## 🚀 Cara Penggunaan
 
-## Format Excel yang Diperlukan
-
-### Kolom Wajib:
-- `base_price`: Harga dasar produk (number)
-- `code`: Kode produk (string)
-- `name`: Nama produk (string)
-- `suppliers_id`: ID supplier (number)
-- `trx_per_day`: Transaksi per hari (number)
-
-### Kolom Opsional:
-- `parameters`: Parameter tambahan (string)
-- `regex_custom_info`: Info custom regex (string)
-
-### Contoh Data:
-```json
-{
-  "base_price": 10000,
-  "code": "OTF_FIW3_MOBO_10GB_14D_10K",
-  "name": "Freedom Internet 10GB 14hr",
-  "parameters": "",
-  "regex_custom_info": "",
-  "suppliers_id": 35,
-  "trx_per_day": 100
-}
-```
-
-## Cara Penggunaan
-
-1. **Set Bearer Token**:
-   - Klik tombol "Set Bearer Token" di header
-   - Masukkan token Anda dan klik "Save"
-
-2. **Update Product**:
-   - Klik card "Update Product Otomatis"
-   - Upload file Excel dengan format yang sesuai
-   - Klik "Process & Send to API"
-   - Monitor progress dan hasil processing
-
-3. **Download Template**:
-   - Klik tombol "Download Template" untuk mendapatkan contoh format Excel
-
-## Instalasi dan Setup
-
-### Prerequisites
-- Node.js (versi 14 atau lebih baru)
-- npm atau yarn
-
-### Install Dependencies
+### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### Start Development Server
+### 2. Edit Konfigurasi
+Edit file script yang ingin digunakan:
+
+**Untuk INDOSAT Transfer:**
+```javascript
+// updateproductsupplierotomatis.js
+const CONFIG = {
+  SUPPLIER_ID: 36,
+  BEARER_TOKEN: 'YOUR_TOKEN_HERE',  // ← GANTI INI!
+  PROVIDER: 'INDOSAT'
+};
+```
+
+### 3. Jalankan Aplikasi React
 ```bash
 npm start
 ```
 
-Aplikasi akan berjalan di `http://localhost:3000`
+### 4. Menggunakan Script Node.js
 
-### Build untuk Production
+**INDOSAT Transfer:**
 ```bash
-npm run build
+# Test dengan dry run
+node updateproductsupplierotomatis.js --dry-run
+
+# Jalankan update nyata
+node updateproductsupplierotomatis.js
 ```
 
-## API Endpoint
+**Tambah Produk Free Fire:**
+```bash
+# Test dengan dry run
+node addproduksupplier.js --dry-run
 
-Aplikasi mengirim data ke endpoint:
-```
-POST https://indotechapi.socx.app/api/v1/suppliers_products
-```
-
-**Headers yang dibutuhkan:**
-- `Authorization: Bearer {token}`
-- `Content-Type: application/json`
-
-## Teknologi yang Digunakan
-
-- **Frontend**: React 18, React Router DOM
-- **Styling**: Tailwind CSS
-- **File Processing**: SheetJS (xlsx)
-- **HTTP Client**: Axios
-- **State Management**: React Context API
-
-## Struktur Database (Untuk Pengembangan Selanjutnya)
-
-### Tabel yang Diperlukan:
-
-1. **users** - Manajemen user
-2. **api_logs** - Log API calls
-3. **excel_uploads** - History upload file Excel
-4. **product_updates** - History update produk
-5. **suppliers** - Data supplier
-6. **products** - Data produk
-
-### Contoh Schema:
-
-```sql
--- Tabel untuk log API calls
-CREATE TABLE api_logs (
-  id SERIAL PRIMARY KEY,
-  endpoint VARCHAR(255) NOT NULL,
-  method VARCHAR(10) NOT NULL,
-  request_data JSONB,
-  response_data JSONB,
-  status_code INTEGER,
-  error_message TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabel untuk history upload Excel
-CREATE TABLE excel_uploads (
-  id SERIAL PRIMARY KEY,
-  filename VARCHAR(255) NOT NULL,
-  file_size BIGINT,
-  total_rows INTEGER,
-  success_count INTEGER,
-  error_count INTEGER,
-  uploaded_by INTEGER REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+# Jalankan tambah produk nyata
+node addproduksupplier.js
 ```
 
-## Fitur yang Akan Datang
+## 📊 Contoh Update
 
-- [ ] Cek Promo iSimple
-- [ ] Cek Promo DigiPos
-- [ ] Dashboard analytics
-- [ ] Export hasil processing
-- [ ] Batch processing
-- [ ] User management
-- [ ] API rate limiting
+### **INDOSAT Transfer:**
+| Kode Produk | Nama Lama | Nama Baru |
+|-------------|-----------|-----------|
+| ITB5 | INDOSAT TRANSFER (ITB5) | INDOSAT TRANSFER 5.000 |
+| ITB10 | INDOSAT TRANSFER (ITB10) | INDOSAT TRANSFER 10.000 |
+| ITB40 | INDOSAT TRANSFER (ITB40) | INDOSAT TRANSFER 40.000 |
 
-## Troubleshooting
+### **Free Fire:**
+| Kode Produk | Denom | Rate Supplier | Harga Jual | Margin |
+|-------------|-------|---------------|------------|--------|
+| GMFF5 | 5 | 85000 | 84500 | -2.5 |
+| GMFF10 | 10 | 85000 | 84500 | -5 |
+| GMFF20 | 20 | 85000 | 84500 | -10 |
 
-### Error "Bearer Token Required"
-- Pastikan Bearer Token sudah diatur di header aplikasi
-- Token disimpan di localStorage dan akan tetap ada setelah refresh
+### **Tambah Produk Free Fire:**
+| Kode Produk | Nama | Base Price |
+|-------------|------|------------|
+| FFH10 | Free Fire 10 Diamon | 1,546 |
+| FFH100 | Free Fire 100 Diamon | 12,364 |
+| FFH1000 | Free Fire 1000 Diamon | 119,000 |
 
-### Error Upload File
-- Pastikan file yang diupload adalah format Excel (.xlsx atau .xls)
-- Pastikan format kolom sesuai dengan template yang disediakan
-- Pastikan data dalam kolom wajib tidak kosong
+## 🔍 Yang Dilakukan Script
 
-### Error API Call
+### **INDOSAT Transfer (Node.js):**
+1. Mengambil data produk dari supplier ID 36
+2. Filter produk ITB (kode yang mengandung "ITB")
+3. Ekstrak denom dari kode produk (ITB5 → 5, ITB40 → 40)
+4. Update nama produk menjadi format standar
+5. Logging lengkap ke file dan console
+
+### **Free Fire (React UI):**
+1. Mengambil data produk Free Fire dari category 8 dan provider 8
+2. Filter produk GMFF dan FFP
+3. Ekstrak denom dari kode produk (GMFF5 → 5, GMFF10 → 10)
+4. Hitung harga berdasarkan rate supplier dan harga jual
+5. Update harga produk, markup, dan supplier status
+6. Tampilan real-time dengan preview kalkulasi
+
+### **Tambah Produk Free Fire (Node.js):**
+1. Mengambil data produk Free Fire dari array `FREE_FIRE_PRODUCTS`
+2. Mengirim POST request ke `/suppliers_products` untuk setiap produk
+3. Menggunakan payload dengan format yang sesuai
+4. Logging lengkap ke file dan console
+5. Mode dry run untuk testing
+6. Rate limiting untuk menghindari error API
+
+## ⚠️ PENTING
+
+- **Untuk Script Node.js: Selalu test dengan dry run** terlebih dahulu
+- **Jangan commit bearer token** ke repository
+- **Backup data** sebelum update
+- **Untuk Free Fire: Gunakan preview kalkulasi** untuk melihat hasil sebelum update
+
+## 🆘 Troubleshooting
+
+### Error "Bearer token tidak ditemukan"
+- Edit file script yang digunakan (`updateproductsupplierotomatis.js` atau `addproduksupplier.js`)
+- Ganti `BEARER_TOKEN: ''` dengan token Anda
+
+### Error "Tidak ada produk ITB ditemukan"
+- Periksa apakah supplier ID 36 memiliki produk ITB
+- Pastikan koneksi internet stabil
+
+### Error "Tidak dapat mengekstrak denom"
+- Periksa format kode produk harus: ITB5, ITB10, ITB40, dll
+
+### Error di React UI
+- Pastikan Bearer Token sudah diatur di header
 - Periksa koneksi internet
-- Pastikan Bearer Token valid dan tidak expired
-- Periksa format data yang dikirim sesuai dengan yang diharapkan API
+- Refresh halaman jika ada error
 
-## Contributing
+## 📄 Log
 
-1. Fork repository
-2. Buat feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buat Pull Request
+### **INDOSAT Transfer:**
+Semua aktivitas disimpan di `update_log.txt` untuk referensi.
 
-## License
+### **Tambah Produk Free Fire:**
+Semua aktivitas disimpan di `addproduksupplier_log.txt` untuk referensi.
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## Support
-
-Untuk dukungan teknis atau pertanyaan, silakan buat issue di repository ini.
+### **Free Fire:**
+Hasil update ditampilkan langsung di UI dengan detail lengkap.

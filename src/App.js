@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import ProductUpdate from './pages/ProductUpdate';
 import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
+import FreeFireUpdate from './pages/FreeFireUpdate';
 import { BearerTokenProvider } from './contexts/BearerTokenContext';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/product-update" element={<ProductUpdate />} />
               <Route path="/pulsa-transfer-update" element={<PulsaTransferUpdate />} />
+              <Route path="/freefire-update" element={<FreeFireUpdate />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

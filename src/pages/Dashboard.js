@@ -23,6 +23,14 @@ const Dashboard = () => {
       status: 'active'
     },
     {
+      id: 'freefire-update',
+      title: 'Update Free Fire Otomatis',
+      description: 'Kelola harga produk Free Fire berdasarkan rate supplier dan harga jual',
+      icon: '🎮',
+      path: '/freefire-update',
+      status: 'active'
+    },
+    {
       id: 'cek-promo-isimple',
       title: 'Cek Promo iSimple',
       description: 'Fitur untuk mengecek promo dari iSimple (akan segera hadir)',
@@ -148,6 +156,7 @@ const Dashboard = () => {
           <li>Pilih fitur yang ingin digunakan dari card di atas</li>
           <li>Untuk Update Product, upload file Excel dengan format yang sesuai</li>
           <li>Untuk Pulsa Transfer, pilih provider, supplier, dan input pot yang diinginkan</li>
+          <li>Untuk Free Fire, pilih supplier, input rate dan harga jual untuk update otomatis</li>
           <li>Data akan otomatis dikirim ke SOCX API menggunakan token yang telah diatur</li>
         </ol>
       </div>

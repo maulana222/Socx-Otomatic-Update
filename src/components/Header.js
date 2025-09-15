@@ -69,6 +69,16 @@ const Header = () => {
             >
               Pulsa Transfer
             </Link>
+            <Link
+              to="/freefire-update"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/freefire-update')
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              🎮 Free Fire
+            </Link>
           </nav>
 
           {/* Bearer Token Section */}

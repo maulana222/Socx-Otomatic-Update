@@ -1,0 +1,707 @@
+[2025-09-11T18:12:37.538Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-11T18:12:37.560Z] [INFO] Supplier ID: 12
+[2025-09-11T18:12:37.561Z] [INFO] Dry Run: false
+[2025-09-11T18:12:37.562Z] [INFO] Fetching products for supplier ID: 12
+[2025-09-11T18:12:38.013Z] [INFO] Successfully fetched 302 products
+[2025-09-11T18:12:38.015Z] [INFO] Ditemukan 23 produk XTF
+[2025-09-11T18:12:38.016Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 5.000 (XTF5) ---
+[2025-09-11T18:12:38.019Z] [INFO] Denom dari kode: 5
+[2025-09-11T18:12:38.020Z] [INFO] Denom dari nama: 5
+[2025-09-11T18:12:38.022Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 5.000
+[2025-09-11T18:12:38.023Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 5.000
+[2025-09-11T18:12:38.025Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.027Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 10.000 (XTF10) ---
+[2025-09-11T18:12:38.030Z] [INFO] Denom dari kode: 10
+[2025-09-11T18:12:38.031Z] [INFO] Denom dari nama: 10
+[2025-09-11T18:12:38.032Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 10.000
+[2025-09-11T18:12:38.035Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 10.000
+[2025-09-11T18:12:38.036Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.038Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 15.000 (XTF15) ---
+[2025-09-11T18:12:38.041Z] [INFO] Denom dari kode: 15
+[2025-09-11T18:12:38.042Z] [INFO] Denom dari nama: 15
+[2025-09-11T18:12:38.044Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 15.000
+[2025-09-11T18:12:38.045Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 15.000
+[2025-09-11T18:12:38.047Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.048Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 20.000 (XTF20) ---
+[2025-09-11T18:12:38.049Z] [INFO] Denom dari kode: 20
+[2025-09-11T18:12:38.051Z] [INFO] Denom dari nama: 20
+[2025-09-11T18:12:38.075Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 20.000
+[2025-09-11T18:12:38.077Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 20.000
+[2025-09-11T18:12:38.078Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.081Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 25.000 (XTF25) ---
+[2025-09-11T18:12:38.091Z] [INFO] Denom dari kode: 25
+[2025-09-11T18:12:38.093Z] [INFO] Denom dari nama: 25
+[2025-09-11T18:12:38.095Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 25.000
+[2025-09-11T18:12:38.097Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 25.000
+[2025-09-11T18:12:38.099Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.102Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER 30.000 (XTF30) ---
+[2025-09-11T18:12:38.106Z] [INFO] Denom dari kode: 30
+[2025-09-11T18:12:38.107Z] [INFO] Denom dari nama: 30
+[2025-09-11T18:12:38.109Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER 30.000
+[2025-09-11T18:12:38.110Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 30.000
+[2025-09-11T18:12:38.113Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T18:12:38.114Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF35) ---
+[2025-09-11T18:12:38.117Z] [INFO] Denom dari kode: 35
+[2025-09-11T18:12:38.119Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.120Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.121Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 35.000
+[2025-09-11T18:12:38.122Z] [INFO] Updating product ID: 7788
+[2025-09-11T18:12:38.164Z] [INFO] Successfully updated product 7788
+[2025-09-11T18:12:38.268Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF40) ---
+[2025-09-11T18:12:38.270Z] [INFO] Denom dari kode: 40
+[2025-09-11T18:12:38.271Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.272Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.273Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 40.000
+[2025-09-11T18:12:38.274Z] [INFO] Updating product ID: 7789
+[2025-09-11T18:12:38.314Z] [INFO] Successfully updated product 7789
+[2025-09-11T18:12:38.416Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF45) ---
+[2025-09-11T18:12:38.419Z] [INFO] Denom dari kode: 45
+[2025-09-11T18:12:38.421Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.422Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.426Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 45.000
+[2025-09-11T18:12:38.429Z] [INFO] Updating product ID: 7790
+[2025-09-11T18:12:38.474Z] [INFO] Successfully updated product 7790
+[2025-09-11T18:12:38.589Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF55) ---
+[2025-09-11T18:12:38.593Z] [INFO] Denom dari kode: 55
+[2025-09-11T18:12:38.594Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.595Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.595Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 55.000
+[2025-09-11T18:12:38.596Z] [INFO] Updating product ID: 7791
+[2025-09-11T18:12:38.637Z] [INFO] Successfully updated product 7791
+[2025-09-11T18:12:38.749Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF50) ---
+[2025-09-11T18:12:38.750Z] [INFO] Denom dari kode: 50
+[2025-09-11T18:12:38.751Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.753Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.754Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 50.000
+[2025-09-11T18:12:38.755Z] [INFO] Updating product ID: 7792
+[2025-09-11T18:12:38.796Z] [INFO] Successfully updated product 7792
+[2025-09-11T18:12:38.904Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF60) ---
+[2025-09-11T18:12:38.909Z] [INFO] Denom dari kode: 60
+[2025-09-11T18:12:38.912Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:38.913Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:38.915Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 60.000
+[2025-09-11T18:12:38.920Z] [INFO] Updating product ID: 7793
+[2025-09-11T18:12:38.962Z] [INFO] Successfully updated product 7793
+[2025-09-11T18:12:39.074Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF65) ---
+[2025-09-11T18:12:39.076Z] [INFO] Denom dari kode: 65
+[2025-09-11T18:12:39.077Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.078Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.079Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 65.000
+[2025-09-11T18:12:39.081Z] [INFO] Updating product ID: 7794
+[2025-09-11T18:12:39.121Z] [INFO] Successfully updated product 7794
+[2025-09-11T18:12:39.228Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF70) ---
+[2025-09-11T18:12:39.232Z] [INFO] Denom dari kode: 70
+[2025-09-11T18:12:39.237Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.241Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.243Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 70.000
+[2025-09-11T18:12:39.245Z] [INFO] Updating product ID: 7795
+[2025-09-11T18:12:39.297Z] [INFO] Successfully updated product 7795
+[2025-09-11T18:12:39.404Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF75) ---
+[2025-09-11T18:12:39.407Z] [INFO] Denom dari kode: 75
+[2025-09-11T18:12:39.408Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.411Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.416Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 75.000
+[2025-09-11T18:12:39.422Z] [INFO] Updating product ID: 7796
+[2025-09-11T18:12:39.475Z] [INFO] Successfully updated product 7796
+[2025-09-11T18:12:39.587Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF80) ---
+[2025-09-11T18:12:39.597Z] [INFO] Denom dari kode: 80
+[2025-09-11T18:12:39.598Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.602Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.603Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 80.000
+[2025-09-11T18:12:39.605Z] [INFO] Updating product ID: 7797
+[2025-09-11T18:12:39.646Z] [INFO] Successfully updated product 7797
+[2025-09-11T18:12:39.755Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF85) ---
+[2025-09-11T18:12:39.763Z] [INFO] Denom dari kode: 85
+[2025-09-11T18:12:39.765Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.767Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.768Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 85.000
+[2025-09-11T18:12:39.771Z] [INFO] Updating product ID: 7798
+[2025-09-11T18:12:39.811Z] [INFO] Successfully updated product 7798
+[2025-09-11T18:12:39.930Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF90) ---
+[2025-09-11T18:12:39.942Z] [INFO] Denom dari kode: 90
+[2025-09-11T18:12:39.946Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:39.948Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:39.951Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 90.000
+[2025-09-11T18:12:39.956Z] [INFO] Updating product ID: 7799
+[2025-09-11T18:12:39.997Z] [INFO] Successfully updated product 7799
+[2025-09-11T18:12:40.101Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF95) ---
+[2025-09-11T18:12:40.107Z] [INFO] Denom dari kode: 95
+[2025-09-11T18:12:40.108Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:40.110Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:40.111Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 95.000
+[2025-09-11T18:12:40.113Z] [INFO] Updating product ID: 7800
+[2025-09-11T18:12:40.152Z] [INFO] Successfully updated product 7800
+[2025-09-11T18:12:40.254Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF100) ---
+[2025-09-11T18:12:40.257Z] [INFO] Denom dari kode: 100
+[2025-09-11T18:12:40.258Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:40.260Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:40.262Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 100.000
+[2025-09-11T18:12:40.264Z] [INFO] Updating product ID: 7801
+[2025-09-11T18:12:40.304Z] [INFO] Successfully updated product 7801
+[2025-09-11T18:12:40.410Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF125) ---
+[2025-09-11T18:12:40.412Z] [INFO] Denom dari kode: 125
+[2025-09-11T18:12:40.413Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:40.414Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:40.415Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 125.000
+[2025-09-11T18:12:40.416Z] [INFO] Updating product ID: 7802
+[2025-09-11T18:12:40.457Z] [INFO] Successfully updated product 7802
+[2025-09-11T18:12:40.570Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF150) ---
+[2025-09-11T18:12:40.577Z] [INFO] Denom dari kode: 150
+[2025-09-11T18:12:40.578Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:40.579Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:40.581Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 150.000
+[2025-09-11T18:12:40.591Z] [INFO] Updating product ID: 7803
+[2025-09-11T18:12:40.639Z] [INFO] Successfully updated product 7803
+[2025-09-11T18:12:40.755Z] [INFO] 
+--- Memproses produk: XL AXIS TRANSFER (XTF200) ---
+[2025-09-11T18:12:40.762Z] [INFO] Denom dari kode: 200
+[2025-09-11T18:12:40.763Z] [INFO] Denom dari nama: null
+[2025-09-11T18:12:40.764Z] [INFO] Nama produk saat ini: XL AXIS TRANSFER
+[2025-09-11T18:12:40.765Z] [INFO] Nama produk yang benar: XL AXIS TRANSFER 200.000
+[2025-09-11T18:12:40.773Z] [INFO] Updating product ID: 7804
+[2025-09-11T18:12:40.815Z] [INFO] Successfully updated product 7804
+[2025-09-11T18:12:40.930Z] [INFO] 
+=== RINGKASAN HASIL UPDATE ===
+[2025-09-11T18:12:40.941Z] [INFO] Total produk diproses: 17
+[2025-09-11T18:12:40.946Z] [INFO] Berhasil diupdate: 17
+[2025-09-11T18:12:40.949Z] [INFO] Gagal diupdate: 0
+[2025-09-11T18:12:40.953Z] [INFO] ✅ XTF35: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 35.000"
+[2025-09-11T18:12:40.962Z] [INFO] ✅ XTF40: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 40.000"
+[2025-09-11T18:12:40.967Z] [INFO] ✅ XTF45: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 45.000"
+[2025-09-11T18:12:40.972Z] [INFO] ✅ XTF55: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 55.000"
+[2025-09-11T18:12:40.973Z] [INFO] ✅ XTF50: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 50.000"
+[2025-09-11T18:12:40.975Z] [INFO] ✅ XTF60: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 60.000"
+[2025-09-11T18:12:40.977Z] [INFO] ✅ XTF65: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 65.000"
+[2025-09-11T18:12:40.981Z] [INFO] ✅ XTF70: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 70.000"
+[2025-09-11T18:12:40.985Z] [INFO] ✅ XTF75: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 75.000"
+[2025-09-11T18:12:40.988Z] [INFO] ✅ XTF80: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 80.000"
+[2025-09-11T18:12:40.990Z] [INFO] ✅ XTF85: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 85.000"
+[2025-09-11T18:12:40.993Z] [INFO] ✅ XTF90: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 90.000"
+[2025-09-11T18:12:40.995Z] [INFO] ✅ XTF95: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 95.000"
+[2025-09-11T18:12:40.996Z] [INFO] ✅ XTF100: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 100.000"
+[2025-09-11T18:12:40.997Z] [INFO] ✅ XTF125: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 125.000"
+[2025-09-11T18:12:40.998Z] [INFO] ✅ XTF150: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 150.000"
+[2025-09-11T18:12:40.999Z] [INFO] ✅ XTF200: "XL AXIS TRANSFER" → "XL AXIS TRANSFER 200.000"
+[2025-09-11T18:12:41.005Z] [INFO] === PROSES UPDATE SELESAI ===
+[2025-09-11T19:53:50.466Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-11T19:53:50.472Z] [INFO] Supplier ID: 36
+[2025-09-11T19:53:50.473Z] [INFO] Provider: INDOSAT
+[2025-09-11T19:53:50.474Z] [INFO] Dry Run: false
+[2025-09-11T19:53:50.475Z] [INFO] Fetching products for supplier ID: 36
+[2025-09-11T19:53:50.867Z] [INFO] Successfully fetched 56 products
+[2025-09-11T19:53:50.868Z] [INFO] Ditemukan 0 produk ITF untuk INDOSAT
+[2025-09-11T19:53:50.869Z] [WARNING] Tidak ada produk ITF ditemukan untuk INDOSAT
+[2025-09-11T19:54:12.811Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-11T19:54:12.814Z] [INFO] Supplier ID: 36
+[2025-09-11T19:54:12.815Z] [INFO] Provider: INDOSAT
+[2025-09-11T19:54:12.815Z] [INFO] Dry Run: false
+[2025-09-11T19:54:12.816Z] [INFO] Fetching products for supplier ID: 36
+[2025-09-11T19:54:13.008Z] [INFO] Successfully fetched 56 products
+[2025-09-11T19:54:13.009Z] [INFO] Ditemukan 0 produk ITF untuk INDOSAT
+[2025-09-11T19:54:13.010Z] [WARNING] Tidak ada produk ITF ditemukan untuk INDOSAT
+[2025-09-11T19:55:21.261Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-11T19:55:21.267Z] [INFO] Supplier ID: 36
+[2025-09-11T19:55:21.267Z] [INFO] Provider: INDOSAT
+[2025-09-11T19:55:21.268Z] [INFO] Dry Run: false
+[2025-09-11T19:55:21.269Z] [INFO] Fetching products for supplier ID: 36
+[2025-09-11T19:55:21.487Z] [INFO] Successfully fetched 56 products
+[2025-09-11T19:55:21.489Z] [INFO] Ditemukan 21 produk ITB untuk INDOSAT
+[2025-09-11T19:55:21.490Z] [INFO] 
+--- Memproses produk: PULSA TRANSFER INDOSAT (ITB5) ---
+[2025-09-11T19:55:21.493Z] [INFO] Denom dari kode: 5
+[2025-09-11T19:55:21.494Z] [INFO] Denom dari nama: null
+[2025-09-11T19:55:21.495Z] [INFO] Nama produk saat ini: PULSA TRANSFER INDOSAT
+[2025-09-11T19:55:21.496Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 5.000
+[2025-09-11T19:55:21.497Z] [INFO] Updating product ID: 7779
+[2025-09-11T19:55:21.538Z] [INFO] Successfully updated product 7779
+[2025-09-11T19:55:21.644Z] [INFO] 
+--- Memproses produk: PULSA TRANSFER INDOSAT (ITB10) ---
+[2025-09-11T19:55:21.646Z] [INFO] Denom dari kode: 10
+[2025-09-11T19:55:21.648Z] [INFO] Denom dari nama: null
+[2025-09-11T19:55:21.649Z] [INFO] Nama produk saat ini: PULSA TRANSFER INDOSAT
+[2025-09-11T19:55:21.651Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 10.000
+[2025-09-11T19:55:21.652Z] [INFO] Updating product ID: 7780
+[2025-09-11T19:55:21.694Z] [INFO] Successfully updated product 7780
+[2025-09-11T19:55:21.797Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 15.000 (ITB15) ---
+[2025-09-11T19:55:21.800Z] [INFO] Denom dari kode: 15
+[2025-09-11T19:55:21.801Z] [INFO] Denom dari nama: 15
+[2025-09-11T19:55:21.802Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 15.000
+[2025-09-11T19:55:21.803Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 15.000
+[2025-09-11T19:55:21.804Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.804Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 20.000 (ITB20) ---
+[2025-09-11T19:55:21.806Z] [INFO] Denom dari kode: 20
+[2025-09-11T19:55:21.807Z] [INFO] Denom dari nama: 20
+[2025-09-11T19:55:21.808Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 20.000
+[2025-09-11T19:55:21.808Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 20.000
+[2025-09-11T19:55:21.809Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.810Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 25.000 (ITB25) ---
+[2025-09-11T19:55:21.812Z] [INFO] Denom dari kode: 25
+[2025-09-11T19:55:21.813Z] [INFO] Denom dari nama: 25
+[2025-09-11T19:55:21.814Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 25.000
+[2025-09-11T19:55:21.816Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 25.000
+[2025-09-11T19:55:21.819Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.821Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 30.000 (ITB30) ---
+[2025-09-11T19:55:21.824Z] [INFO] Denom dari kode: 30
+[2025-09-11T19:55:21.825Z] [INFO] Denom dari nama: 30
+[2025-09-11T19:55:21.827Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 30.000
+[2025-09-11T19:55:21.828Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 30.000
+[2025-09-11T19:55:21.829Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.830Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 35.000 (ITB35) ---
+[2025-09-11T19:55:21.832Z] [INFO] Denom dari kode: 35
+[2025-09-11T19:55:21.833Z] [INFO] Denom dari nama: 35
+[2025-09-11T19:55:21.834Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 35.000
+[2025-09-11T19:55:21.835Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 35.000
+[2025-09-11T19:55:21.835Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.836Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 40.000 (ITB40) ---
+[2025-09-11T19:55:21.838Z] [INFO] Denom dari kode: 40
+[2025-09-11T19:55:21.838Z] [INFO] Denom dari nama: 40
+[2025-09-11T19:55:21.839Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 40.000
+[2025-09-11T19:55:21.840Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 40.000
+[2025-09-11T19:55:21.841Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.842Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 50.000 (ITB50) ---
+[2025-09-11T19:55:21.845Z] [INFO] Denom dari kode: 50
+[2025-09-11T19:55:21.846Z] [INFO] Denom dari nama: 50
+[2025-09-11T19:55:21.850Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 50.000
+[2025-09-11T19:55:21.854Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 50.000
+[2025-09-11T19:55:21.856Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.857Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 55.000 (ITB55) ---
+[2025-09-11T19:55:21.860Z] [INFO] Denom dari kode: 55
+[2025-09-11T19:55:21.862Z] [INFO] Denom dari nama: 55
+[2025-09-11T19:55:21.864Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 55.000
+[2025-09-11T19:55:21.870Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 55.000
+[2025-09-11T19:55:21.871Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.873Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 60.000 (ITB60) ---
+[2025-09-11T19:55:21.876Z] [INFO] Denom dari kode: 60
+[2025-09-11T19:55:21.877Z] [INFO] Denom dari nama: 60
+[2025-09-11T19:55:21.878Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 60.000
+[2025-09-11T19:55:21.880Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 60.000
+[2025-09-11T19:55:21.886Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.890Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 65.000 (ITB65) ---
+[2025-09-11T19:55:21.892Z] [INFO] Denom dari kode: 65
+[2025-09-11T19:55:21.893Z] [INFO] Denom dari nama: 65
+[2025-09-11T19:55:21.893Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 65.000
+[2025-09-11T19:55:21.894Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 65.000
+[2025-09-11T19:55:21.895Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.896Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 70.000 (ITB70) ---
+[2025-09-11T19:55:21.897Z] [INFO] Denom dari kode: 70
+[2025-09-11T19:55:21.898Z] [INFO] Denom dari nama: 70
+[2025-09-11T19:55:21.899Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 70.000
+[2025-09-11T19:55:21.900Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 70.000
+[2025-09-11T19:55:21.901Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.902Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 75.000 (ITB75) ---
+[2025-09-11T19:55:21.905Z] [INFO] Denom dari kode: 75
+[2025-09-11T19:55:21.906Z] [INFO] Denom dari nama: 75
+[2025-09-11T19:55:21.907Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 75.000
+[2025-09-11T19:55:21.908Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 75.000
+[2025-09-11T19:55:21.911Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.913Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 80.000 (ITB80) ---
+[2025-09-11T19:55:21.918Z] [INFO] Denom dari kode: 80
+[2025-09-11T19:55:21.919Z] [INFO] Denom dari nama: 80
+[2025-09-11T19:55:21.920Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 80.000
+[2025-09-11T19:55:21.920Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 80.000
+[2025-09-11T19:55:21.921Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.922Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 85.000 (ITB85) ---
+[2025-09-11T19:55:21.924Z] [INFO] Denom dari kode: 85
+[2025-09-11T19:55:21.925Z] [INFO] Denom dari nama: 85
+[2025-09-11T19:55:21.926Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 85.000
+[2025-09-11T19:55:21.926Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 85.000
+[2025-09-11T19:55:21.928Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.930Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 90.000 (ITB90) ---
+[2025-09-11T19:55:21.936Z] [INFO] Denom dari kode: 90
+[2025-09-11T19:55:21.938Z] [INFO] Denom dari nama: 90
+[2025-09-11T19:55:21.939Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 90.000
+[2025-09-11T19:55:21.940Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 90.000
+[2025-09-11T19:55:21.941Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.943Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 95.000 (ITB95) ---
+[2025-09-11T19:55:21.944Z] [INFO] Denom dari kode: 95
+[2025-09-11T19:55:21.946Z] [INFO] Denom dari nama: 95
+[2025-09-11T19:55:21.949Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 95.000
+[2025-09-11T19:55:21.954Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 95.000
+[2025-09-11T19:55:21.962Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.970Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 100.000 (ITB100) ---
+[2025-09-11T19:55:21.971Z] [INFO] Denom dari kode: 100
+[2025-09-11T19:55:21.972Z] [INFO] Denom dari nama: 100
+[2025-09-11T19:55:21.973Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 100.000
+[2025-09-11T19:55:21.974Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 100.000
+[2025-09-11T19:55:21.974Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.975Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 150.000 (ITB150) ---
+[2025-09-11T19:55:21.977Z] [INFO] Denom dari kode: 150
+[2025-09-11T19:55:21.977Z] [INFO] Denom dari nama: 150
+[2025-09-11T19:55:21.978Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 150.000
+[2025-09-11T19:55:21.979Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 150.000
+[2025-09-11T19:55:21.980Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.981Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 200.000 (ITB200) ---
+[2025-09-11T19:55:21.984Z] [INFO] Denom dari kode: 200
+[2025-09-11T19:55:21.985Z] [INFO] Denom dari nama: 200
+[2025-09-11T19:55:21.986Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 200.000
+[2025-09-11T19:55:21.987Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 200.000
+[2025-09-11T19:55:21.988Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-11T19:55:21.989Z] [INFO] 
+=== RINGKASAN HASIL UPDATE ===
+[2025-09-11T19:55:21.990Z] [INFO] Total produk diproses: 2
+[2025-09-11T19:55:21.991Z] [INFO] Berhasil diupdate: 2
+[2025-09-11T19:55:21.992Z] [INFO] Gagal diupdate: 0
+[2025-09-11T19:55:21.993Z] [INFO] ✅ ITB5: "PULSA TRANSFER INDOSAT" → "INDOSAT TRANSFER 5.000"
+[2025-09-11T19:55:21.994Z] [INFO] ✅ ITB10: "PULSA TRANSFER INDOSAT" → "INDOSAT TRANSFER 10.000"
+[2025-09-11T19:55:21.995Z] [INFO] === PROSES UPDATE SELESAI ===
+[2025-09-13T16:28:55.795Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-13T16:28:55.805Z] [INFO] Supplier ID: 36
+[2025-09-13T16:28:55.811Z] [INFO] Provider: INDOSAT
+[2025-09-13T16:28:55.816Z] [INFO] Dry Run: false
+[2025-09-13T16:28:55.819Z] [INFO] Fetching products for supplier ID: 36
+[2025-09-13T16:28:57.417Z] [INFO] Successfully fetched 58 products
+[2025-09-13T16:28:57.418Z] [INFO] Ditemukan 21 produk ITB untuk INDOSAT
+[2025-09-13T16:28:57.420Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 5.000 (ITB5) ---
+[2025-09-13T16:28:57.425Z] [INFO] Denom dari kode: 5
+[2025-09-13T16:28:57.430Z] [INFO] Denom dari nama: 5
+[2025-09-13T16:28:57.432Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 5.000
+[2025-09-13T16:28:57.433Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 5.000
+[2025-09-13T16:28:57.434Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.435Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 10.000 (ITB10) ---
+[2025-09-13T16:28:57.436Z] [INFO] Denom dari kode: 10
+[2025-09-13T16:28:57.438Z] [INFO] Denom dari nama: 10
+[2025-09-13T16:28:57.440Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 10.000
+[2025-09-13T16:28:57.443Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 10.000
+[2025-09-13T16:28:57.444Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.446Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 15.000 (ITB15) ---
+[2025-09-13T16:28:57.448Z] [INFO] Denom dari kode: 15
+[2025-09-13T16:28:57.449Z] [INFO] Denom dari nama: 15
+[2025-09-13T16:28:57.450Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 15.000
+[2025-09-13T16:28:57.451Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 15.000
+[2025-09-13T16:28:57.452Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.452Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 20.000 (ITB20) ---
+[2025-09-13T16:28:57.454Z] [INFO] Denom dari kode: 20
+[2025-09-13T16:28:57.455Z] [INFO] Denom dari nama: 20
+[2025-09-13T16:28:57.456Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 20.000
+[2025-09-13T16:28:57.458Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 20.000
+[2025-09-13T16:28:57.463Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.465Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 25.000 (ITB25) ---
+[2025-09-13T16:28:57.466Z] [INFO] Denom dari kode: 25
+[2025-09-13T16:28:57.467Z] [INFO] Denom dari nama: 25
+[2025-09-13T16:28:57.468Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 25.000
+[2025-09-13T16:28:57.469Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 25.000
+[2025-09-13T16:28:57.470Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.471Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 30.000 (ITB30) ---
+[2025-09-13T16:28:57.481Z] [INFO] Denom dari kode: 30
+[2025-09-13T16:28:57.484Z] [INFO] Denom dari nama: 30
+[2025-09-13T16:28:57.485Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 30.000
+[2025-09-13T16:28:57.486Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 30.000
+[2025-09-13T16:28:57.487Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.488Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 35.000 (ITB35) ---
+[2025-09-13T16:28:57.494Z] [INFO] Denom dari kode: 35
+[2025-09-13T16:28:57.497Z] [INFO] Denom dari nama: 35
+[2025-09-13T16:28:57.499Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 35.000
+[2025-09-13T16:28:57.500Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 35.000
+[2025-09-13T16:28:57.500Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.501Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 40.000 (ITB40) ---
+[2025-09-13T16:28:57.504Z] [INFO] Denom dari kode: 40
+[2025-09-13T16:28:57.506Z] [INFO] Denom dari nama: 40
+[2025-09-13T16:28:57.510Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 40.000
+[2025-09-13T16:28:57.512Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 40.000
+[2025-09-13T16:28:57.514Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.515Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 50.000 (ITB50) ---
+[2025-09-13T16:28:57.517Z] [INFO] Denom dari kode: 50
+[2025-09-13T16:28:57.518Z] [INFO] Denom dari nama: 50
+[2025-09-13T16:28:57.519Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 50.000
+[2025-09-13T16:28:57.519Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 50.000
+[2025-09-13T16:28:57.520Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.521Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 55.000 (ITB55) ---
+[2025-09-13T16:28:57.523Z] [INFO] Denom dari kode: 55
+[2025-09-13T16:28:57.524Z] [INFO] Denom dari nama: 55
+[2025-09-13T16:28:57.527Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 55.000
+[2025-09-13T16:28:57.529Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 55.000
+[2025-09-13T16:28:57.531Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.532Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 60.000 (ITB60) ---
+[2025-09-13T16:28:57.533Z] [INFO] Denom dari kode: 60
+[2025-09-13T16:28:57.534Z] [INFO] Denom dari nama: 60
+[2025-09-13T16:28:57.535Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 60.000
+[2025-09-13T16:28:57.536Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 60.000
+[2025-09-13T16:28:57.541Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.544Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 65.000 (ITB65) ---
+[2025-09-13T16:28:57.550Z] [INFO] Denom dari kode: 65
+[2025-09-13T16:28:57.551Z] [INFO] Denom dari nama: 65
+[2025-09-13T16:28:57.552Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 65.000
+[2025-09-13T16:28:57.553Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 65.000
+[2025-09-13T16:28:57.563Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.570Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 70.000 (ITB70) ---
+[2025-09-13T16:28:57.603Z] [INFO] Denom dari kode: 70
+[2025-09-13T16:28:57.616Z] [INFO] Denom dari nama: 70
+[2025-09-13T16:28:57.640Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 70.000
+[2025-09-13T16:28:57.650Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 70.000
+[2025-09-13T16:28:57.664Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.668Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 75.000 (ITB75) ---
+[2025-09-13T16:28:57.685Z] [INFO] Denom dari kode: 75
+[2025-09-13T16:28:57.698Z] [INFO] Denom dari nama: 75
+[2025-09-13T16:28:57.701Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 75.000
+[2025-09-13T16:28:57.710Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 75.000
+[2025-09-13T16:28:57.715Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.718Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 80.000 (ITB80) ---
+[2025-09-13T16:28:57.721Z] [INFO] Denom dari kode: 80
+[2025-09-13T16:28:57.732Z] [INFO] Denom dari nama: 80
+[2025-09-13T16:28:57.743Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 80.000
+[2025-09-13T16:28:57.748Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 80.000
+[2025-09-13T16:28:57.753Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.785Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 85.000 (ITB85) ---
+[2025-09-13T16:28:57.795Z] [INFO] Denom dari kode: 85
+[2025-09-13T16:28:57.798Z] [INFO] Denom dari nama: 85
+[2025-09-13T16:28:57.799Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 85.000
+[2025-09-13T16:28:57.800Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 85.000
+[2025-09-13T16:28:57.801Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.801Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 90.000 (ITB90) ---
+[2025-09-13T16:28:57.805Z] [INFO] Denom dari kode: 90
+[2025-09-13T16:28:57.807Z] [INFO] Denom dari nama: 90
+[2025-09-13T16:28:57.810Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 90.000
+[2025-09-13T16:28:57.814Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 90.000
+[2025-09-13T16:28:57.815Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.815Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 95.000 (ITB95) ---
+[2025-09-13T16:28:57.817Z] [INFO] Denom dari kode: 95
+[2025-09-13T16:28:57.818Z] [INFO] Denom dari nama: 95
+[2025-09-13T16:28:57.819Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 95.000
+[2025-09-13T16:28:57.820Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 95.000
+[2025-09-13T16:28:57.822Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.827Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 100.000 (ITB100) ---
+[2025-09-13T16:28:57.832Z] [INFO] Denom dari kode: 100
+[2025-09-13T16:28:57.833Z] [INFO] Denom dari nama: 100
+[2025-09-13T16:28:57.834Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 100.000
+[2025-09-13T16:28:57.835Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 100.000
+[2025-09-13T16:28:57.836Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.838Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 150.000 (ITB150) ---
+[2025-09-13T16:28:57.839Z] [INFO] Denom dari kode: 150
+[2025-09-13T16:28:57.841Z] [INFO] Denom dari nama: 150
+[2025-09-13T16:28:57.844Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 150.000
+[2025-09-13T16:28:57.845Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 150.000
+[2025-09-13T16:28:57.848Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.850Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 200.000 (ITB200) ---
+[2025-09-13T16:28:57.853Z] [INFO] Denom dari kode: 200
+[2025-09-13T16:28:57.854Z] [INFO] Denom dari nama: 200
+[2025-09-13T16:28:57.856Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 200.000
+[2025-09-13T16:28:57.856Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 200.000
+[2025-09-13T16:28:57.857Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:28:57.858Z] [INFO] 
+=== RINGKASAN HASIL UPDATE ===
+[2025-09-13T16:28:57.861Z] [INFO] Total produk diproses: 0
+[2025-09-13T16:28:57.865Z] [INFO] Berhasil diupdate: 0
+[2025-09-13T16:28:57.871Z] [INFO] Gagal diupdate: 0
+[2025-09-13T16:28:57.877Z] [INFO] === PROSES UPDATE SELESAI ===
+[2025-09-13T16:29:16.786Z] [INFO] === MULAI PROSES UPDATE PRODUK SUPPLIER ===
+[2025-09-13T16:29:16.795Z] [INFO] Supplier ID: 36
+[2025-09-13T16:29:16.796Z] [INFO] Provider: INDOSAT
+[2025-09-13T16:29:16.797Z] [INFO] Dry Run: false
+[2025-09-13T16:29:16.798Z] [INFO] Fetching products for supplier ID: 36
+[2025-09-13T16:29:17.113Z] [INFO] Successfully fetched 58 products
+[2025-09-13T16:29:17.115Z] [INFO] Ditemukan 21 produk ITB untuk INDOSAT
+[2025-09-13T16:29:17.116Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 5.000 (ITB5) ---
+[2025-09-13T16:29:17.119Z] [INFO] Denom dari kode: 5
+[2025-09-13T16:29:17.120Z] [INFO] Denom dari nama: 5
+[2025-09-13T16:29:17.130Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 5.000
+[2025-09-13T16:29:17.133Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 5.000
+[2025-09-13T16:29:17.134Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.136Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 10.000 (ITB10) ---
+[2025-09-13T16:29:17.148Z] [INFO] Denom dari kode: 10
+[2025-09-13T16:29:17.150Z] [INFO] Denom dari nama: 10
+[2025-09-13T16:29:17.151Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 10.000
+[2025-09-13T16:29:17.152Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 10.000
+[2025-09-13T16:29:17.153Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.159Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 15.000 (ITB15) ---
+[2025-09-13T16:29:17.164Z] [INFO] Denom dari kode: 15
+[2025-09-13T16:29:17.166Z] [INFO] Denom dari nama: 15
+[2025-09-13T16:29:17.169Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 15.000
+[2025-09-13T16:29:17.171Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 15.000
+[2025-09-13T16:29:17.179Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.181Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 20.000 (ITB20) ---
+[2025-09-13T16:29:17.183Z] [INFO] Denom dari kode: 20
+[2025-09-13T16:29:17.184Z] [INFO] Denom dari nama: 20
+[2025-09-13T16:29:17.185Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 20.000
+[2025-09-13T16:29:17.186Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 20.000
+[2025-09-13T16:29:17.197Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.199Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 25.000 (ITB25) ---
+[2025-09-13T16:29:17.201Z] [INFO] Denom dari kode: 25
+[2025-09-13T16:29:17.202Z] [INFO] Denom dari nama: 25
+[2025-09-13T16:29:17.203Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 25.000
+[2025-09-13T16:29:17.204Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 25.000
+[2025-09-13T16:29:17.210Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.213Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 30.000 (ITB30) ---
+[2025-09-13T16:29:17.215Z] [INFO] Denom dari kode: 30
+[2025-09-13T16:29:17.216Z] [INFO] Denom dari nama: 30
+[2025-09-13T16:29:17.217Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 30.000
+[2025-09-13T16:29:17.218Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 30.000
+[2025-09-13T16:29:17.219Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.220Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 35.000 (ITB35) ---
+[2025-09-13T16:29:17.230Z] [INFO] Denom dari kode: 35
+[2025-09-13T16:29:17.231Z] [INFO] Denom dari nama: 35
+[2025-09-13T16:29:17.232Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 35.000
+[2025-09-13T16:29:17.233Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 35.000
+[2025-09-13T16:29:17.234Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.236Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 40.000 (ITB40) ---
+[2025-09-13T16:29:17.243Z] [INFO] Denom dari kode: 40
+[2025-09-13T16:29:17.246Z] [INFO] Denom dari nama: 40
+[2025-09-13T16:29:17.248Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 40.000
+[2025-09-13T16:29:17.249Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 40.000
+[2025-09-13T16:29:17.251Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.252Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 50.000 (ITB50) ---
+[2025-09-13T16:29:17.259Z] [INFO] Denom dari kode: 50
+[2025-09-13T16:29:17.263Z] [INFO] Denom dari nama: 50
+[2025-09-13T16:29:17.264Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 50.000
+[2025-09-13T16:29:17.265Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 50.000
+[2025-09-13T16:29:17.266Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.267Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 55.000 (ITB55) ---
+[2025-09-13T16:29:17.269Z] [INFO] Denom dari kode: 55
+[2025-09-13T16:29:17.269Z] [INFO] Denom dari nama: 55
+[2025-09-13T16:29:17.272Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 55.000
+[2025-09-13T16:29:17.280Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 55.000
+[2025-09-13T16:29:17.281Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.282Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 60.000 (ITB60) ---
+[2025-09-13T16:29:17.284Z] [INFO] Denom dari kode: 60
+[2025-09-13T16:29:17.285Z] [INFO] Denom dari nama: 60
+[2025-09-13T16:29:17.286Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 60.000
+[2025-09-13T16:29:17.291Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 60.000
+[2025-09-13T16:29:17.293Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.296Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 65.000 (ITB65) ---
+[2025-09-13T16:29:17.298Z] [INFO] Denom dari kode: 65
+[2025-09-13T16:29:17.299Z] [INFO] Denom dari nama: 65
+[2025-09-13T16:29:17.299Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 65.000
+[2025-09-13T16:29:17.300Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 65.000
+[2025-09-13T16:29:17.301Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.302Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 70.000 (ITB70) ---
+[2025-09-13T16:29:17.307Z] [INFO] Denom dari kode: 70
+[2025-09-13T16:29:17.310Z] [INFO] Denom dari nama: 70
+[2025-09-13T16:29:17.312Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 70.000
+[2025-09-13T16:29:17.313Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 70.000
+[2025-09-13T16:29:17.314Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.315Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 75.000 (ITB75) ---
+[2025-09-13T16:29:17.316Z] [INFO] Denom dari kode: 75
+[2025-09-13T16:29:17.317Z] [INFO] Denom dari nama: 75
+[2025-09-13T16:29:17.318Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 75.000
+[2025-09-13T16:29:17.319Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 75.000
+[2025-09-13T16:29:17.320Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.325Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 80.000 (ITB80) ---
+[2025-09-13T16:29:17.330Z] [INFO] Denom dari kode: 80
+[2025-09-13T16:29:17.331Z] [INFO] Denom dari nama: 80
+[2025-09-13T16:29:17.332Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 80.000
+[2025-09-13T16:29:17.333Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 80.000
+[2025-09-13T16:29:17.333Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.334Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 85.000 (ITB85) ---
+[2025-09-13T16:29:17.337Z] [INFO] Denom dari kode: 85
+[2025-09-13T16:29:17.341Z] [INFO] Denom dari nama: 85
+[2025-09-13T16:29:17.344Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 85.000
+[2025-09-13T16:29:17.346Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 85.000
+[2025-09-13T16:29:17.347Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.348Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 90.000 (ITB90) ---
+[2025-09-13T16:29:17.349Z] [INFO] Denom dari kode: 90
+[2025-09-13T16:29:17.350Z] [INFO] Denom dari nama: 90
+[2025-09-13T16:29:17.352Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 90.000
+[2025-09-13T16:29:17.353Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 90.000
+[2025-09-13T16:29:17.354Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.357Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 95.000 (ITB95) ---
+[2025-09-13T16:29:17.364Z] [INFO] Denom dari kode: 95
+[2025-09-13T16:29:17.365Z] [INFO] Denom dari nama: 95
+[2025-09-13T16:29:17.365Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 95.000
+[2025-09-13T16:29:17.366Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 95.000
+[2025-09-13T16:29:17.367Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.369Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 100.000 (ITB100) ---
+[2025-09-13T16:29:17.371Z] [INFO] Denom dari kode: 100
+[2025-09-13T16:29:17.373Z] [INFO] Denom dari nama: 100
+[2025-09-13T16:29:17.375Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 100.000
+[2025-09-13T16:29:17.383Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 100.000
+[2025-09-13T16:29:17.385Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.387Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 150.000 (ITB150) ---
+[2025-09-13T16:29:17.398Z] [INFO] Denom dari kode: 150
+[2025-09-13T16:29:17.401Z] [INFO] Denom dari nama: 150
+[2025-09-13T16:29:17.402Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 150.000
+[2025-09-13T16:29:17.403Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 150.000
+[2025-09-13T16:29:17.408Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.411Z] [INFO] 
+--- Memproses produk: INDOSAT TRANSFER 200.000 (ITB200) ---
+[2025-09-13T16:29:17.418Z] [INFO] Denom dari kode: 200
+[2025-09-13T16:29:17.419Z] [INFO] Denom dari nama: 200
+[2025-09-13T16:29:17.431Z] [INFO] Nama produk saat ini: INDOSAT TRANSFER 200.000
+[2025-09-13T16:29:17.433Z] [INFO] Nama produk yang benar: INDOSAT TRANSFER 200.000
+[2025-09-13T16:29:17.434Z] [INFO] Nama produk sudah benar, tidak perlu update
+[2025-09-13T16:29:17.435Z] [INFO] 
+=== RINGKASAN HASIL UPDATE ===
+[2025-09-13T16:29:17.436Z] [INFO] Total produk diproses: 0
+[2025-09-13T16:29:17.443Z] [INFO] Berhasil diupdate: 0
+[2025-09-13T16:29:17.447Z] [INFO] Gagal diupdate: 0
+[2025-09-13T16:29:17.449Z] [INFO] === PROSES UPDATE SELESAI ===

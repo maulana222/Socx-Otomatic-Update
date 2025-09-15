@@ -172,6 +172,20 @@ const PulsaTransferUpdate = () => {
       console.log('Supplier Names from products:', Array.from(supplierNames));
       console.log('All Suppliers:', suppliersResponse.data);
       console.log('Filtered Suppliers:', filteredSuppliers);
+      console.log('Our Product Codes Data:', ourProductCodesData);
+      console.log('Available Transfer Rates:', transferRates);
+      
+      // Debug: Check if any products have denom extraction issues
+      const denomIssues = ourProductCodesData.filter(product => product.denom === null);
+      if (denomIssues.length > 0) {
+        console.warn('Products with denom extraction issues:', denomIssues);
+      }
+      
+      // Debug: Show available denoms for each provider
+      Object.keys(transferRates).forEach(provider => {
+        const denoms = Object.keys(transferRates[provider]).map(d => parseInt(d)).sort((a, b) => a - b);
+        console.log(`Available denoms for ${provider}:`, denoms);
+      });
 
       setAllSuppliers(filteredSuppliers);
       setSupplierModuleMapping(supplierModuleMapping);
@@ -510,8 +524,38 @@ const PulsaTransferUpdate = () => {
 
   const extractDenomFromProductName = (productName) => {
     // Extract denom from product name like "TELKOMSEL TRANSFER 5.000" -> 5
-    const match = productName.match(/(\d+)/);
-    return match ? parseInt(match[1]) : null;
+    // Handle various formats including "XL AXIS TRANSFER (XTF5)" -> 5
+    console.log('Extracting denom from product name:', productName);
+    
+    // Try multiple patterns to extract denom
+    let match = null;
+    
+    // Pattern 1: Standard format "PROVIDER TRANSFER 5.000" or "PROVIDER TRANSFER 5K"
+    match = productName.match(/(\d+)(?:\.000|K|k)/);
+    if (match) {
+      const denom = parseInt(match[1]);
+      console.log('Found denom (pattern 1):', denom);
+      return denom;
+    }
+    
+    // Pattern 2: Format with parentheses like "XL AXIS TRANSFER (XTF5)" -> 5
+    match = productName.match(/\([A-Z]*(\d+)\)/);
+    if (match) {
+      const denom = parseInt(match[1]);
+      console.log('Found denom (pattern 2):', denom);
+      return denom;
+    }
+    
+    // Pattern 3: Any number in the string
+    match = productName.match(/(\d+)/);
+    if (match) {
+      const denom = parseInt(match[1]);
+      console.log('Found denom (pattern 3):', denom);
+      return denom;
+    }
+    
+    console.log('No denom found in product name:', productName);
+    return null;
   };
 
   const calculateMargin = () => {
@@ -729,11 +773,23 @@ const PulsaTransferUpdate = () => {
           const adminFee = providerRates[denom];
           
           if (!adminFee) {
+            const errorMessage = denom === null 
+              ? `Tidak dapat mengekstrak denom dari nama produk: "${product.name}". Pastikan nama produk mengandung angka (contoh: "XL AXIS TRANSFER (XTF5)" atau "XL TRANSFER 5.000")`
+              : `Biaya admin tidak ditemukan untuk denom ${denom} pada provider ${providerName}`;
+            
+            console.error('Admin fee lookup failed:', {
+              productName: product.name,
+              productCode: product.code,
+              denom: denom,
+              providerName: providerName,
+              availableDenoms: Object.keys(providerRates)
+            });
+            
             return {
               status: 'error',
               product: product.name,
               product_code: product.code,
-              error: `Biaya admin tidak ditemukan untuk denom ${denom}`
+              error: errorMessage
             };
           }
 
@@ -1107,14 +1163,36 @@ const PulsaTransferUpdate = () => {
                   
                   // Debug: log provider info
                   console.log('Provider Debug:', {
+                    productName: product.name,
                     selectedProviderData: selectedProviderData,
                     providerName: providerName,
                     denom: denom,
                     adminFee: adminFee,
-                    providerRates: providerRates
+                    providerRates: providerRates,
+                    availableDenoms: Object.keys(providerRates)
                   });
                   
-                  if (!adminFee) return null;
+                  if (!adminFee) {
+                    console.warn(`Preview calculation failed for product: ${product.name}, denom: ${denom}`);
+                    return (
+                      <div key={product.id} className="bg-red-50 p-3 rounded border border-red-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-sm text-red-800">{product.name}</p>
+                            <p className="text-xs text-red-600">
+                              {denom === null 
+                                ? `Tidak dapat mengekstrak denom dari nama produk`
+                                : `Denom ${denom} tidak ditemukan di provider ${providerName}`
+                              }
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs text-red-600 font-medium">ERROR</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   
                   const newBasePrice = Math.round(calculateModal(adminFee, parseFloat(supplierPot)));
                   const newSellPrice = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
