@@ -948,6 +948,11 @@ const PulsaTransferUpdate = () => {
         <p className="text-lg text-gray-600">
           Kelola pot pulsa transfer, update harga modal, dan aktifkan supplier yang dipilih
         </p>
+        <div className="mt-4">
+          <a href="/" className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
+            ← Kembali ke Dashboard
+          </a>
+        </div>
       </div>
 
       {/* Bearer Token Check */}

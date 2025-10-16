@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 
 const Header = () => {
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [tempToken, setTempToken] = useState('');
   const { bearerToken, updateBearerToken, clearBearerToken } = useBearerToken();
-  const location = useLocation();
 
   const handleSaveToken = () => {
     if (tempToken.trim()) {
@@ -22,9 +20,7 @@ const Header = () => {
     setShowTokenInput(false);
   };
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -37,49 +33,8 @@ const Header = () => {
             </h1>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-8">
-            <Link
-              to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/')
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/product-update"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/product-update')
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Update Product
-            </Link>
-            <Link
-              to="/pulsa-transfer-update"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/pulsa-transfer-update')
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Pulsa Transfer
-            </Link>
-            <Link
-              to="/freefire-update"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/freefire-update')
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              🎮 Free Fire
-            </Link>
-          </nav>
+          {/* Navigation removed as requested */}
+          <div></div>
 
           {/* Bearer Token Section */}
           <div className="flex items-center space-x-4">

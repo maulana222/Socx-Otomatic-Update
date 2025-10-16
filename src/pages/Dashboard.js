@@ -31,6 +31,14 @@ const Dashboard = () => {
       status: 'active'
     },
     {
+      id: 'emoney-update',
+      title: 'Update E-Money',
+      description: 'Kelola harga e-money (OVO, DANA, LinkAja, GoPay) berbasis tambahan harga',
+      icon: '💳',
+      path: '/emoney-update',
+      status: 'active'
+    },
+    {
       id: 'cek-promo-isimple',
       title: 'Cek Promo iSimple',
       description: 'Fitur untuk mengecek promo dari iSimple (akan segera hadir)',

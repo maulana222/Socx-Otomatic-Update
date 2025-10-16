@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -14,8 +14,7 @@ const FreeFireUpdate = () => {
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [allSuppliers, setAllSuppliers] = useState([]);
-  const [freeFireProducts, setFreeFireProducts] = useState([]);
-  const [supplierModuleMapping, setSupplierModuleMapping] = useState(new Map());
+  const [supplierProducts, setSupplierProducts] = useState([]);
 
   // Konfigurasi
   const CONFIG = {
@@ -24,14 +23,7 @@ const FreeFireUpdate = () => {
     API_BASE_URL: 'https://indotechapi.socx.app/api/v1'
   };
 
-  // Fetch Free Fire products and suppliers
-  useEffect(() => {
-    if (bearerToken) {
-      fetchFreeFireProductsAndSuppliers();
-    }
-  }, [bearerToken]);
-
-  const fetchFreeFireProductsAndSuppliers = async () => {
+  const fetchFreeFireProductsAndSuppliers = useCallback(async () => {
     setIsLoadingProducts(true);
     setIsLoadingSuppliers(true);
     try {
@@ -61,8 +53,6 @@ const FreeFireUpdate = () => {
       const gameProducts = productsResponse.data.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
       );
-
-      setFreeFireProducts(gameProducts);
 
       // Get unique supplier names and their modules_id from Free Fire products
       const supplierNames = new Set();
@@ -106,7 +96,6 @@ const FreeFireUpdate = () => {
       );
 
       setAllSuppliers(relevantSuppliers);
-      setSupplierModuleMapping(supplierModuleMapping);
 
       console.log('Free Fire Products:', gameProducts.length);
       console.log('Relevant Suppliers:', relevantSuppliers.length);
@@ -114,13 +103,119 @@ const FreeFireUpdate = () => {
 
     } catch (error) {
       console.error('Error fetching Free Fire products and suppliers:', error);
-      setFreeFireProducts([]);
       setAllSuppliers([]);
     } finally {
       setIsLoadingProducts(false);
       setIsLoadingSuppliers(false);
     }
-  };
+  }, [bearerToken, CONFIG.API_BASE_URL, CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
+
+  const fetchSupplierProducts = useCallback(async () => {
+    if (!selectedSupplier) return;
+
+    setIsLoadingProducts(true);
+    try {
+      // Fetch Free Fire products first
+      const productsResponse = await axios.get(
+        `${CONFIG.API_BASE_URL}/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Filter produk GMFF dan FFP
+      const gameProducts = productsResponse.data.filter(product => 
+        product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
+      );
+
+
+      // Get supplier modules for products
+      const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
+      const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
+
+      const modulePromises = gameProducts.map(async (product) => {
+        try {
+          const res = await axios.get(
+            `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${product.id}`,
+            { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+          );
+          const arr = Array.isArray(res.data) ? res.data : [];
+          const mod = arr.find((sm) => sm.supplier === selectedSupplierName);
+          if (mod) {
+            return { 
+              product_code: mod.product_code, 
+              product_name: mod.product_name,
+              base_price: mod.base_price,
+              suppliers_products_id: mod.suppliers_products_id
+            };
+          }
+          return null;
+        } catch (_) {
+          return null;
+        }
+      });
+
+      const modules = (await Promise.all(modulePromises)).filter(Boolean);
+      const baseCodes = [...new Set(modules.map((m) => m.product_code.replace(/\d+/g, '')))]
+        .filter((s) => s && s.length > 0);
+
+      // Create mapping from product_code to base_price
+      const moduleMapping = new Map();
+      modules.forEach(module => {
+        moduleMapping.set(module.product_code, {
+          base_price: module.base_price,
+          suppliers_products_id: module.suppliers_products_id
+        });
+      });
+
+      // Fetch supplier products
+      const supplierProductsResponse = await axios.get(
+        `${CONFIG.API_BASE_URL}/suppliers_products/list/${selectedSupplier}`,
+        { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+      );
+
+      const filtered = supplierProductsResponse.data.filter((sp) => {
+        const base = sp.code.replace(/\d+/g, '');
+        return baseCodes.includes(base);
+      }).map(sp => {
+        // Add base_price from supplier module if available
+        const moduleData = moduleMapping.get(sp.code);
+        if (moduleData) {
+          return {
+            ...sp,
+            base_price: moduleData.base_price,
+            suppliers_products_id: moduleData.suppliers_products_id
+          };
+        }
+        return sp;
+      });
+      
+      console.log('Supplier modules mapping:', moduleMapping);
+      console.log('Filtered supplier products with base_price:', filtered);
+      setSupplierProducts(filtered);
+    } catch (_) {
+      setSupplierProducts([]);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, [selectedSupplier, bearerToken, allSuppliers, CONFIG.API_BASE_URL, CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
+
+  // Fetch Free Fire products and suppliers
+  useEffect(() => {
+    if (bearerToken) {
+      fetchFreeFireProductsAndSuppliers();
+    }
+  }, [bearerToken, fetchFreeFireProductsAndSuppliers]);
+
+  // Fetch supplier products when supplier is selected
+  useEffect(() => {
+    if (selectedSupplier && bearerToken) {
+      fetchSupplierProducts();
+    }
+  }, [selectedSupplier, bearerToken, fetchSupplierProducts]);
 
   // Fungsi untuk mengekstrak denom dari kode produk
   const extractDenomFromProductCode = (productCode) => {
@@ -139,25 +234,6 @@ const FreeFireUpdate = () => {
     return null;
   };
 
-  // Fungsi untuk mengambil supplier dari produk
-  const fetchProductSuppliers = async (productId) => {
-    try {
-      const response = await axios.get(
-        `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${productId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching suppliers for product ${productId}:`, error);
-      return [];
-    }
-  };
 
   // Fungsi untuk mengambil reseller group pricing
   const fetchResellersGroupPricing = async (productId) => {
@@ -320,11 +396,11 @@ const FreeFireUpdate = () => {
       return;
     }
 
-    if (freeFireProducts.length === 0) {
+    if (supplierProducts.length === 0) {
       Swal.fire({
         icon: 'warning',
         title: 'Perhatian!',
-        text: 'Tidak ada produk Free Fire yang ditemukan',
+        text: 'Tidak ada produk Free Fire yang ditemukan untuk supplier ini',
         confirmButtonText: 'OK'
       });
       return;
@@ -340,8 +416,8 @@ const FreeFireUpdate = () => {
       const sellPriceNum = parseFloat(sellPrice);
       const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
 
-      // Proses setiap produk Free Fire
-      for (const product of freeFireProducts) {
+      // Proses setiap produk supplier
+      for (const product of supplierProducts) {
         try {
           // Ekstrak denom dari kode produk
           const denom = extractDenomFromProductCode(product.code);
@@ -356,7 +432,7 @@ const FreeFireUpdate = () => {
             continue;
           }
 
-          // Hitung harga berdasarkan rate supplier
+          // Hitung harga berdasarkan rate supplier dan sell price
           const calculatedPrice = Math.round((denom * supplierRateNum) / 1000);
           const finalPrice = Math.round((denom * sellPriceNum) / 1000);
           
@@ -364,8 +440,6 @@ const FreeFireUpdate = () => {
           const margin = finalPrice - calculatedPrice;
           const marginPercent = calculatedPrice > 0 ? ((margin / calculatedPrice) * 100).toFixed(2) : 0;
 
-          // Ambil supplier untuk produk ini
-          const productSuppliers = await fetchProductSuppliers(product.id);
           
           // Ambil reseller group pricing
           const resellerGroups = await fetchResellersGroupPricing(product.id);
@@ -434,6 +508,7 @@ const FreeFireUpdate = () => {
     setSelectedSupplier('');
     setSupplierRate('');
     setSellPrice('');
+    setSupplierProducts([]);
     setResults([]);
     setShowResults(false);
   };
@@ -448,6 +523,11 @@ const FreeFireUpdate = () => {
         <p className="text-lg text-gray-600">
           Kelola harga produk Free Fire berdasarkan rate supplier dan harga jual
         </p>
+        <div className="mt-4">
+          <a href="/" className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
+            ← Kembali ke Dashboard
+          </a>
+        </div>
       </div>
 
       {/* Bearer Token Check */}
@@ -471,59 +551,9 @@ const FreeFireUpdate = () => {
         </div>
       )}
 
-      {/* Free Fire Products Preview */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Produk Free Fire yang Tersedia</h2>
-        {isLoadingProducts ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <span className="ml-2 text-gray-600">Loading products...</span>
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              Ditemukan {freeFireProducts.length} produk Free Fire (GMFF & FFP)
-            </p>
-            {freeFireProducts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {freeFireProducts.map((product) => {
-                  const denom = extractDenomFromProductCode(product.code);
-                  return (
-                    <div
-                      key={product.id}
-                      className="p-4 rounded-lg border border-gray-200 bg-gray-50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                          <p className="text-sm text-gray-600">Code: {product.code}</p>
-                          <p className="text-sm text-gray-500">Denom: {denom || 'N/A'}</p>
-                          <p className="text-sm text-gray-500">Price: Rp {product.price?.toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            product.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {product.status === 1 ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Tidak ada produk Free Fire ditemukan</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Supplier Selection */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Pilih Supplier</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Pilih Supplier</h2>
         {isLoadingSuppliers ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -532,7 +562,7 @@ const FreeFireUpdate = () => {
         ) : (
           <div>
             <p className="text-sm text-gray-600 mb-4">
-              Ditemukan {allSuppliers.length} supplier yang relevan dengan produk Free Fire
+              Supplier yang memiliki produk Free Fire: {allSuppliers.length} supplier
             </p>
             {allSuppliers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -551,7 +581,6 @@ const FreeFireUpdate = () => {
                         <h3 className="font-semibold text-gray-900">{supplier.name}</h3>
                         <p className="text-sm text-gray-600">Notes: {supplier.notes}</p>
                         <p className="text-sm text-gray-500">Balance: Rp {supplier.balance?.toLocaleString()}</p>
-                        <p className="text-xs text-blue-600">Module ID: {supplierModuleMapping.get(supplier.name) || 'N/A'}</p>
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -566,7 +595,7 @@ const FreeFireUpdate = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500">Tidak ada supplier ditemukan untuk produk Free Fire</p>
+                <p className="text-gray-500">Tidak ada supplier yang memiliki produk Free Fire</p>
               </div>
             )}
           </div>
@@ -576,12 +605,12 @@ const FreeFireUpdate = () => {
       {/* Rate Input */}
       {selectedSupplier && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">3. Input Rate & Harga</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Input Rate & Harga</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Supplier Rate */}
             <div>
               <label htmlFor="supplier-rate" className="block text-sm font-medium text-gray-700 mb-2">
-                Rate Supplier
+                Rate Modal
               </label>
               <input
                 type="number"
@@ -593,13 +622,13 @@ const FreeFireUpdate = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Contoh: 85000"
               />
-              <p className="text-sm text-gray-500 mt-1">Rate yang digunakan supplier</p>
+              <p className="text-sm text-gray-500 mt-1">Rate yang digunakan untuk modal</p>
             </div>
 
             {/* Sell Price */}
             <div>
               <label htmlFor="sell-price" className="block text-sm font-medium text-gray-700 mb-2">
-                Harga Jual
+                Rate Jual
               </label>
               <input
                 type="number"
@@ -611,16 +640,16 @@ const FreeFireUpdate = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Contoh: 84500"
               />
-              <p className="text-sm text-gray-500 mt-1">Harga yang akan dijual ke customer</p>
+              <p className="text-sm text-gray-500 mt-1">Rate yang akan dijual ke customer</p>
             </div>
           </div>
 
           {/* Preview Calculation */}
-          {supplierRate && sellPrice && freeFireProducts.length > 0 && (
+          {supplierRate && sellPrice && supplierProducts.length > 0 && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-900 mb-2">Preview Kalkulasi</h3>
               <div className="space-y-3">
-                {freeFireProducts.slice(0, 3).map((product) => {
+                {supplierProducts.slice(0, 3).map((product) => {
                   const denom = extractDenomFromProductCode(product.code);
                   if (!denom) return null;
                   
@@ -649,12 +678,48 @@ const FreeFireUpdate = () => {
                     </div>
                   );
                 })}
-                {freeFireProducts.length > 3 && (
+                {supplierProducts.length > 3 && (
                   <p className="text-xs text-gray-600 text-center">
-                    ... dan {freeFireProducts.length - 3} produk lainnya
+                    ... dan {supplierProducts.length - 3} produk lainnya
                   </p>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Products */}
+      {selectedSupplier && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">3. Produk Free Fire</h2>
+          {isLoadingProducts ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Loading products...</span>
+            </div>
+          ) : supplierProducts.length === 0 ? (
+            <p className="text-gray-500">Tidak ada produk</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {supplierProducts.slice(0, 48).map((item) => (
+                <div key={item.id} className="p-4 rounded-lg border bg-gray-50 h-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-800 mb-1">{item.name}</p>
+                      <p className="text-xs text-gray-600">Kode: {item.code}</p>
+                    </div>
+                    <div className="text-right text-sm">
+                      <p className="font-semibold text-green-700">Modal: Rp {item.base_price?.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {supplierProducts.length > 48 && (
+                <div className="col-span-full">
+                  <p className="text-xs text-gray-600 text-center">... dan {supplierProducts.length - 48} produk lainnya</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -667,7 +732,7 @@ const FreeFireUpdate = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Ready to Update</h3>
               <p className="text-sm text-gray-600">
-                Free Fire - {allSuppliers.find(s => s.id === parseInt(selectedSupplier))?.name} ({freeFireProducts.length} produk)
+                Free Fire - {allSuppliers.find(s => s.id === parseInt(selectedSupplier))?.name} ({supplierProducts.length} produk)
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -746,10 +811,10 @@ const FreeFireUpdate = () => {
                         </div>
                         <div className="mt-2 text-xs text-gray-500 grid grid-cols-2 gap-4">
                           <div>
-                            Rate Supplier: {result.supplier_rate?.toLocaleString()}
+                            Rate Modal: {result.supplier_rate?.toLocaleString()}
                           </div>
                           <div>
-                            Harga Jual: {result.sell_price?.toLocaleString()}
+                            Rate Jual: {result.sell_price?.toLocaleString()}
                           </div>
                         </div>
                         
