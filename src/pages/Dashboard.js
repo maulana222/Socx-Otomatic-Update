@@ -39,12 +39,12 @@ const Dashboard = () => {
       status: 'active'
     },
     {
-      id: 'cek-promo-isimple',
-      title: 'Cek Promo iSimple',
-      description: 'Fitur untuk mengecek promo dari iSimple (akan segera hadir)',
-      icon: '🎁',
-      path: '#',
-      status: 'coming-soon'
+      id: 'isimple-produksi',
+      title: 'Isimple Produksi',
+      description: 'Cek paket data unik berdasarkan nomor telepon dengan fitur download Excel',
+      icon: '📱',
+      path: '/isimple-produksi',
+      status: 'active'
     },
     {
       id: 'cek-promo-digipos',
