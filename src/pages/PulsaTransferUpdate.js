@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -20,8 +20,8 @@ const PulsaTransferUpdate = () => {
   const [supplierModuleMapping, setSupplierModuleMapping] = useState(new Map());
   const [ourProductCodes, setOurProductCodes] = useState([]);
 
-  // Data provider
-  const providers = [
+  // Data provider (memoized agar stabil di deps hook)
+  const providers = useMemo(() => ([
     {
       id: 1,
       name: 'Telkomsel',
@@ -57,259 +57,13 @@ const PulsaTransferUpdate = () => {
       color: 'bg-orange-500',
       endpoint: 6 // /api/v1/products/filter/1/5
     }
-  ];
+  ]), []);
 
   const selectedProviderData = providers.find(p => p.id === selectedProvider);
   const selectedSupplierData = allSuppliers.find(s => s.id === selectedSupplier);
 
-  // Fetch suppliers when provider is selected
-  useEffect(() => {
-    if (selectedProvider && bearerToken) {
-      fetchSuppliersByProvider();
-    }
-  }, [selectedProvider, bearerToken]);
-
-  // Fetch supplier products when supplier is selected
-  useEffect(() => {
-    if (selectedSupplier && bearerToken) {
-      fetchSupplierProducts();
-    }
-  }, [selectedSupplier, bearerToken]);
-
-  const fetchSuppliersByProvider = async () => {
-    setIsLoadingSuppliers(true);
-    try {
-      // Fetch all suppliers first
-      const suppliersResponse = await axios.get(
-        'https://indotechapi.socx.app/api/v1/suppliers',
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      // Get the correct endpoint for the selected provider
-      const providerData = providers.find(p => p.id === selectedProvider);
-      const endpoint = providerData ? providerData.endpoint : selectedProvider;
-      
-      // Fetch products for the selected provider
-      const productsResponse = await axios.get(
-        `https://indotechapi.socx.app/api/v1/products/filter/1/${endpoint}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      // Filter products that contain "TRANSFER"
-      const transferProducts = productsResponse.data.filter(product => 
-        product.name.toLowerCase().includes('transfer')
-      );
-
-      // Store transfer products for later use (contains products_id for price update)
-      setTransferProducts(transferProducts);
-
-      // Get unique supplier names and their modules_id from transfer products
-      const supplierNames = new Set();
-      const supplierModuleMapping = new Map(); // Map supplier name to suppliers_modules_id
-      const ourProductCodesData = []; // Store our product codes and prices
-      
-      // Batch fetch suppliers for all products to reduce OPTIONS requests
-      const supplierPromises = transferProducts.map(async (product) => {
-        try {
-          const productSuppliersResponse = await axios.get(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          return productSuppliersResponse.data;
-        } catch (error) {
-          console.error(`Error fetching suppliers for product ${product.id}:`, error);
-          return null;
-        }
-      });
-      
-      // Wait for all requests to complete
-      const allSupplierResponses = await Promise.all(supplierPromises);
-      
-      // Process all responses
-      allSupplierResponses.forEach((supplierData, index) => {
-        if (supplierData && Array.isArray(supplierData)) {
-          supplierData.forEach(supplier => {
-            // Use supplier name to match
-            supplierNames.add(supplier.supplier);
-            // Store mapping: supplier name -> suppliers_modules_id
-            supplierModuleMapping.set(supplier.supplier, supplier.suppliers_modules_id);
-            
-            // Collect our product codes (products_code) and prices
-            ourProductCodesData.push({
-              products_code: supplier.products_code,
-              product_name: supplier.product_name,
-              base_price: supplier.base_price,
-              denom: extractDenomFromProductName(supplier.product_name)
-            });
-          });
-        } else {
-          console.warn(`No supplier data found for product ${transferProducts[index].id}`);
-        }
-      });
-
-      // Filter suppliers that have transfer products for this provider
-      const filteredSuppliers = suppliersResponse.data.filter(supplier => 
-        supplierNames.has(supplier.name)
-      );
-
-      console.log('Transfer Products:', transferProducts);
-      console.log('Supplier Names from products:', Array.from(supplierNames));
-      console.log('All Suppliers:', suppliersResponse.data);
-      console.log('Filtered Suppliers:', filteredSuppliers);
-      console.log('Our Product Codes Data:', ourProductCodesData);
-      console.log('Available Transfer Rates:', transferRates);
-      
-      // Debug: Check if any products have denom extraction issues
-      const denomIssues = ourProductCodesData.filter(product => product.denom === null);
-      if (denomIssues.length > 0) {
-        console.warn('Products with denom extraction issues:', denomIssues);
-      }
-      
-      // Debug: Show available denoms for each provider
-      Object.keys(transferRates).forEach(provider => {
-        const denoms = Object.keys(transferRates[provider]).map(d => parseInt(d)).sort((a, b) => a - b);
-        console.log(`Available denoms for ${provider}:`, denoms);
-      });
-
-      setAllSuppliers(filteredSuppliers);
-      setSupplierModuleMapping(supplierModuleMapping);
-      setOurProductCodes(ourProductCodesData);
-    } catch (error) {
-      console.error('Error fetching suppliers by provider:', error);
-      setAllSuppliers([]);
-    } finally {
-      setIsLoadingSuppliers(false);
-    }
-  };
-
-  const fetchSupplierProducts = async () => {
-    if (!selectedSupplier) return;
-
-    setIsLoadingProducts(true);
-    try {
-      // Step 1: Get suppliers_products_id and product_code from products_has_suppliers_modules
-      const supplierModulePromises = transferProducts.map(async (product) => {
-        try {
-          const response = await axios.get(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          // Find the selected supplier in the response
-          const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
-          const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
-          
-          console.log(`Processing product ${product.id}, looking for supplier: ${selectedSupplierName}`);
-          
-          // Check if response data exists and is an array
-          if (!response.data || !Array.isArray(response.data)) {
-            console.warn(`No supplier module data found for product ${product.id}`, response.data);
-            return null;
-          }
-          
-          console.log(`Found ${response.data.length} supplier modules for product ${product.id}`);
-          
-          const supplierModule = response.data.find(sm => sm.supplier === selectedSupplierName);
-          
-          if (supplierModule) {
-            return {
-              suppliers_products_id: supplierModule.suppliers_products_id,
-              product_code: supplierModule.product_code,
-              product_name: supplierModule.product_name,
-              base_price: supplierModule.base_price
-            };
-          }
-          return null;
-        } catch (error) {
-          console.error(`Error fetching supplier module for product ${product.id}:`, error);
-          return null;
-        }
-      });
-      
-      const supplierModules = await Promise.all(supplierModulePromises);
-      const validModules = supplierModules.filter(module => module !== null);
-      
-      console.log('Valid supplier modules:', validModules);
-      
-      // Step 2: Get unique product codes (without numbers) for filtering
-      const productCodes = [...new Set(validModules.map(module => {
-        // Extract base code without numbers (e.g., "TTF10" -> "TTF")
-        return module.product_code.replace(/\d+/g, '');
-      }))];
-      
-      console.log('Product codes to filter:', productCodes);
-      
-      // Step 3: Fetch all supplier products and filter by product codes
-      const supplierProductsResponse = await axios.get(
-        `https://indotechapi.socx.app/api/v1/suppliers_products/list/${selectedSupplier}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      // Filter products by product codes (without numbers)
-      const filteredProducts = supplierProductsResponse.data.filter(product => {
-        const productCodeBase = product.code.replace(/\d+/g, '');
-        return productCodes.includes(productCodeBase);
-      });
-      
-      console.log('All supplier products:', supplierProductsResponse.data);
-      console.log('Filtered products by code:', filteredProducts);
-      
-      setSupplierProducts(filteredProducts);
-    } catch (error) {
-      console.error('Error fetching supplier products:', error);
-      setSupplierProducts([]);
-    } finally {
-      setIsLoadingProducts(false);
-    }
-  };
-
-  const handleProviderSelect = (providerId) => {
-    setSelectedProvider(providerId);
-    setSelectedSupplier('');
-    setSupplierPot('');
-    setSellPot('');
-    setSupplierProducts([]);
-    setResults([]);
-    setShowResults(false);
-  };
-
-  const handleSupplierSelect = (supplierId) => {
-    setSelectedSupplier(supplierId);
-    setSupplierPot('');
-    setSellPot('');
-    setSupplierProducts([]);
-    setResults([]);
-    setShowResults(false);
-  };
-
-  // Data biaya admin untuk Transfer (semua provider)
-  const transferRates = {
+  // Data biaya admin untuk Transfer (semua provider) — memoized agar stabil di deps
+  const transferRates = useMemo(() => ({
     // Telkomsel Transfer
     telkomsel: {
       5: 7000,
@@ -484,6 +238,254 @@ const PulsaTransferUpdate = () => {
       90: 2600,
       95: 2600
     }
+  }), []);
+
+  // useEffect dipindah ke bawah setelah deklarasi useCallback agar lolos lint no-use-before-define
+
+  const fetchSuppliersByProvider = useCallback(async () => {
+    setIsLoadingSuppliers(true);
+    try {
+      // Fetch all suppliers first
+      const suppliersResponse = await axios.get(
+        'https://indotechapi.socx.app/api/v1/suppliers',
+        {
+          headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Get the correct endpoint for the selected provider
+      const providerData = providers.find(p => p.id === selectedProvider);
+      const endpoint = providerData ? providerData.endpoint : selectedProvider;
+      
+      // Fetch products for the selected provider
+      const productsResponse = await axios.get(
+        `https://indotechapi.socx.app/api/v1/products/filter/1/${endpoint}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Filter products that contain "TRANSFER"
+      const transferProducts = productsResponse.data.filter(product => 
+        product.name.toLowerCase().includes('transfer')
+      );
+
+      // Store transfer products for later use (contains products_id for price update)
+      setTransferProducts(transferProducts);
+
+      // Get unique supplier names and their modules_id from transfer products
+      const supplierNames = new Set();
+      const supplierModuleMapping = new Map(); // Map supplier name to suppliers_modules_id
+      const ourProductCodesData = []; // Store our product codes and prices
+      
+      // Batch fetch suppliers for all products to reduce OPTIONS requests
+      const supplierPromises = transferProducts.map(async (product) => {
+        try {
+          const productSuppliersResponse = await axios.get(
+            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${bearerToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          return productSuppliersResponse.data;
+        } catch (error) {
+          console.error(`Error fetching suppliers for product ${product.id}:`, error);
+          return null;
+        }
+      });
+      
+      // Wait for all requests to complete
+      const allSupplierResponses = await Promise.all(supplierPromises);
+      
+      // Process all responses
+      allSupplierResponses.forEach((supplierData, index) => {
+        if (supplierData && Array.isArray(supplierData)) {
+          supplierData.forEach(supplier => {
+            // Use supplier name to match
+            supplierNames.add(supplier.supplier);
+            // Store mapping: supplier name -> suppliers_modules_id
+            supplierModuleMapping.set(supplier.supplier, supplier.suppliers_modules_id);
+            
+            // Collect our product codes (products_code) and prices
+            ourProductCodesData.push({
+              products_code: supplier.products_code,
+              product_name: supplier.product_name,
+              base_price: supplier.base_price,
+              denom: extractDenomFromProductName(supplier.product_name)
+            });
+          });
+        } else {
+          console.warn(`No supplier data found for product ${transferProducts[index].id}`);
+        }
+      });
+
+      // Filter suppliers that have transfer products for this provider
+      const filteredSuppliers = suppliersResponse.data.filter(supplier => 
+        supplierNames.has(supplier.name)
+      );
+
+      console.log('Transfer Products:', transferProducts);
+      console.log('Supplier Names from products:', Array.from(supplierNames));
+      console.log('All Suppliers:', suppliersResponse.data);
+      console.log('Filtered Suppliers:', filteredSuppliers);
+      console.log('Our Product Codes Data:', ourProductCodesData);
+      console.log('Available Transfer Rates:', transferRates);
+      
+      // Debug: Check if any products have denom extraction issues
+      const denomIssues = ourProductCodesData.filter(product => product.denom === null);
+      if (denomIssues.length > 0) {
+        console.warn('Products with denom extraction issues:', denomIssues);
+      }
+      
+      // Debug: Show available denoms for each provider
+      Object.keys(transferRates).forEach(provider => {
+        const denoms = Object.keys(transferRates[provider]).map(d => parseInt(d)).sort((a, b) => a - b);
+        console.log(`Available denoms for ${provider}:`, denoms);
+      });
+
+      setAllSuppliers(filteredSuppliers);
+      setSupplierModuleMapping(supplierModuleMapping);
+      setOurProductCodes(ourProductCodesData);
+    } catch (error) {
+      console.error('Error fetching suppliers by provider:', error);
+      setAllSuppliers([]);
+    } finally {
+      setIsLoadingSuppliers(false);
+    }
+  }, [bearerToken, providers, selectedProvider, transferRates]);
+
+  const fetchSupplierProducts = useCallback(async () => {
+    if (!selectedSupplier) return;
+
+    setIsLoadingProducts(true);
+    try {
+      // Step 1: Get suppliers_products_id and product_code from products_has_suppliers_modules
+      const supplierModulePromises = transferProducts.map(async (product) => {
+        try {
+          const response = await axios.get(
+            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${bearerToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          // Find the selected supplier in the response
+          const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
+          const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
+          
+          console.log(`Processing product ${product.id}, looking for supplier: ${selectedSupplierName}`);
+          
+          // Check if response data exists and is an array
+          if (!response.data || !Array.isArray(response.data)) {
+            console.warn(`No supplier module data found for product ${product.id}`, response.data);
+            return null;
+          }
+          
+          console.log(`Found ${response.data.length} supplier modules for product ${product.id}`);
+          
+          const supplierModule = response.data.find(sm => sm.supplier === selectedSupplierName);
+          
+          if (supplierModule) {
+            return {
+              suppliers_products_id: supplierModule.suppliers_products_id,
+              product_code: supplierModule.product_code,
+              product_name: supplierModule.product_name,
+              base_price: supplierModule.base_price
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error fetching supplier module for product ${product.id}:`, error);
+          return null;
+        }
+      });
+      
+      const supplierModules = await Promise.all(supplierModulePromises);
+      const validModules = supplierModules.filter(module => module !== null);
+      
+      console.log('Valid supplier modules:', validModules);
+      
+      // Step 2: Get unique product codes (without numbers) for filtering
+      const productCodes = [...new Set(validModules.map(module => {
+        // Extract base code without numbers (e.g., "TTF10" -> "TTF")
+        return module.product_code.replace(/\d+/g, '');
+      }))];
+      
+      console.log('Product codes to filter:', productCodes);
+      
+      // Step 3: Fetch all supplier products and filter by product codes
+      const supplierProductsResponse = await axios.get(
+        `https://indotechapi.socx.app/api/v1/suppliers_products/list/${selectedSupplier}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Filter products by product codes (without numbers)
+      const filteredProducts = supplierProductsResponse.data.filter(product => {
+        const productCodeBase = product.code.replace(/\d+/g, '');
+        return productCodes.includes(productCodeBase);
+      });
+      
+      console.log('All supplier products:', supplierProductsResponse.data);
+      console.log('Filtered products by code:', filteredProducts);
+      
+      setSupplierProducts(filteredProducts);
+    } catch (error) {
+      console.error('Error fetching supplier products:', error);
+      setSupplierProducts([]);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, [selectedSupplier, bearerToken, transferProducts, allSuppliers]);
+
+  // Fetch suppliers when provider is selected
+  useEffect(() => {
+    if (selectedProvider && bearerToken) {
+      fetchSuppliersByProvider();
+    }
+  }, [selectedProvider, bearerToken, fetchSuppliersByProvider]);
+
+  // Fetch supplier products when supplier is selected
+  useEffect(() => {
+    if (selectedSupplier && bearerToken) {
+      fetchSupplierProducts();
+    }
+  }, [selectedSupplier, bearerToken, fetchSupplierProducts]);
+
+  const handleProviderSelect = (providerId) => {
+    setSelectedProvider(providerId);
+    setSelectedSupplier('');
+    setSupplierPot('');
+    setSellPot('');
+    setSupplierProducts([]);
+    setResults([]);
+    setShowResults(false);
+  };
+
+  const handleSupplierSelect = (supplierId) => {
+    setSelectedSupplier(supplierId);
+    setSupplierPot('');
+    setSellPot('');
+    setSupplierProducts([]);
+    setResults([]);
+    setShowResults(false);
   };
 
   const calculateModal = (adminFee, pot) => {
@@ -558,39 +560,7 @@ const PulsaTransferUpdate = () => {
     return null;
   };
 
-  const calculateMargin = () => {
-    if (!supplierPot || !sellPot || !selectedProvider) {
-      return { margin: 0, marginPercent: 0 };
-    }
-
-    const supplierPotNum = parseFloat(supplierPot);
-    const sellPotNum = parseFloat(sellPot);
-    
-    // Ambil admin fee dari provider yang dipilih (gunakan denom 5K sebagai contoh)
-    const providerName = selectedProviderData?.name.toLowerCase();
-    const providerRates = transferRates[providerName] || transferRates.telkomsel;
-    const adminFee = providerRates[5]; // Gunakan denom 5K sebagai referensi
-    
-    if (!adminFee) {
-      return { margin: 0, marginPercent: 0 };
-    }
-
-    // Hitung harga modal dan harga jual
-    const hargaModal = Math.round(calculateModal(adminFee, supplierPotNum));
-    const hargaJual = Math.round(calculateHargaJual(adminFee, sellPotNum));
-    
-    // Hitung margin dari selisih harga
-    const margin = hargaJual - hargaModal;
-    const marginPercent = hargaModal > 0 ? (margin / hargaModal) * 100 : 0;
-    
-    return { 
-      margin, 
-      marginPercent,
-      hargaModal,
-      hargaJual,
-      adminFee
-    };
-  };
+  // calculateMargin dihapus karena tidak dipakai (menghindari no-unused-vars)
 
   const updateSupplierStatus = async (productsId, selectedSupplierName, token) => {
     try {
@@ -758,7 +728,8 @@ const PulsaTransferUpdate = () => {
     setShowResults(false);
 
     try {
-      const { margin, marginPercent } = calculateMargin();
+      // Hitung margin (jika diperlukan untuk preview UI), tidak digunakan langsung di proses update
+      // const { margin, marginPercent } = calculateMargin();
       const updateResults = [];
 
       // Batch update semua produk transfer dari supplier to reduce OPTIONS requests

@@ -47,6 +47,14 @@ const Dashboard = () => {
       status: 'active'
     },
     {
+      id: 'tri-produksi',
+      title: 'Tri Rita Produksi',
+      description: 'Cek paket data unik Tri Rita berdasarkan nomor telepon dengan fitur download Excel',
+      icon: '📱',
+      path: '/tri-produksi',
+      status: 'active'
+    },
+    {
       id: 'cek-promo-digipos',
       title: 'Cek Promo DigiPos',
       description: 'Fitur untuk mengecek promo dari DigiPos (akan segera hadir)',

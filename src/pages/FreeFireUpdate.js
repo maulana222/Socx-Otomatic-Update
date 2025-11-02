@@ -15,6 +15,45 @@ const FreeFireUpdate = () => {
   const [showResults, setShowResults] = useState(false);
   const [allSuppliers, setAllSuppliers] = useState([]);
   const [supplierProducts, setSupplierProducts] = useState([]);
+  const [showAllPreview, setShowAllPreview] = useState(false);
+
+  // Mapping Denom → Jumlah GS (Garena Shell) sesuai daftar yang diberikan
+  // Contoh: 5 → 3 GS, 10 → 6 GS, ... 1000 → 462 GS
+  const DENOM_TO_GS = {
+    5: 3,
+    10: 6,
+    20: 12,
+    25: 15,
+    30: 18,
+    40: 24,
+    50: 24,
+    55: 27,
+    70: 33,
+    75: 36,
+    80: 39,
+    90: 45,
+    100: 48,
+    120: 60,
+    140: 66,
+    150: 72,
+    160: 78,
+    190: 90,
+    200: 96,
+    210: 99,
+    280: 132,
+    355: 165,
+    375: 177,
+    405: 189,
+    475: 222,
+    500: 234,
+    510: 240,
+    545: 255,
+    720: 330,
+    790: 363,
+    860: 396,
+    930: 429,
+    1000: 462,
+  };
 
   // Konfigurasi
   const CONFIG = {
@@ -22,6 +61,17 @@ const FreeFireUpdate = () => {
     PROVIDER_ID: 8,  // Free Fire provider
     API_BASE_URL: 'https://indotechapi.socx.app/api/v1'
   };
+
+  // Hindari panggilan markup saat running di localhost (CORS di endpoint markup)
+  // Bisa dipaksa aktif di dev dengan localStorage 'ff_allow_markup_dev' = '1' atau query ?allowMarkup=1
+  const CAN_CALL_MARKUP = (() => {
+    if (typeof window === 'undefined') return true;
+    const isLocal = /^(localhost|127\.0\.0\.1)/.test(window.location.hostname);
+    const allowParam = new URLSearchParams(window.location.search).get('allowMarkup');
+    const allowStorage = window.localStorage.getItem('ff_allow_markup_dev');
+    const forceAllow = allowParam === '1' || allowStorage === '1';
+    return !isLocal || forceAllow;
+  })();
 
   const fetchFreeFireProductsAndSuppliers = useCallback(async () => {
     setIsLoadingProducts(true);
@@ -125,7 +175,7 @@ const FreeFireUpdate = () => {
           }
         }
       );
-
+      
       // Filter produk GMFF dan FFP
       const gameProducts = productsResponse.data.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
@@ -219,18 +269,26 @@ const FreeFireUpdate = () => {
 
   // Fungsi untuk mengekstrak denom dari kode produk
   const extractDenomFromProductCode = (productCode) => {
-    // Pattern untuk GMFF5, GMFF10, GMFF20, dll
-    let match = productCode.match(/GMFF(\d+)/);
-    if (match) {
-      return parseInt(match[1]);
+    if (!productCode) return null;
+    const code = String(productCode).toUpperCase();
+
+    // Pattern spesifik
+    let match = code.match(/GMFF(\d+)/);
+    if (match) return parseInt(match[1]);
+
+    match = code.match(/FFP(\d+)/);
+    if (match) return parseInt(match[1]);
+
+    match = code.match(/FFK(\d+)/);
+    if (match) return parseInt(match[1]);
+
+    // Fallback: ambil deret angka terakhir pada kode
+    const allNums = code.match(/(\d+)/g);
+    if (allNums && allNums.length > 0) {
+      const lastNum = allNums[allNums.length - 1];
+      return parseInt(lastNum);
     }
-    
-    // Pattern untuk FFP5, FFP10, FFP20, dll
-    match = productCode.match(/FFP(\d+)/);
-    if (match) {
-      return parseInt(match[1]);
-    }
-    
+
     return null;
   };
 
@@ -248,38 +306,16 @@ const FreeFireUpdate = () => {
         }
       );
       
-      return response.data;
+      // Pastikan return array, bukan null atau undefined
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error(`Error fetching resellers group pricing:`, error);
       return [];
     }
   };
 
-  // Fungsi untuk mengupdate harga produk
-  const updateProductPrice = async (productId, newPrice) => {
-    try {
-      const response = await axios.post(
-        `${CONFIG.API_BASE_URL}/products/update_price`,
-        {
-          id: productId,
-          price: newPrice
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      return { success: true, response: response.data };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
   // Fungsi untuk mengupdate markup reseller group
-  const updateMarkup = async (resellerGroupId, newMarkup) => {
+  const updateMarkup = async (resellerGroupId, newMarkup, token) => {
     try {
       const response = await axios.post(
         `${CONFIG.API_BASE_URL}/resellers_group_has_products/update_markup`,
@@ -291,7 +327,7 @@ const FreeFireUpdate = () => {
         },
         {
           headers: {
-            'Authorization': `Bearer ${bearerToken}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -304,13 +340,13 @@ const FreeFireUpdate = () => {
   };
 
   // Fungsi untuk mengupdate supplier status
-  const updateSupplierStatus = async (productId, selectedSupplierName) => {
+  const updateSupplierStatus = async (productId, selectedSupplierName, token) => {
     try {
       const response = await axios.get(
         `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${productId}`,
         {
           headers: {
-            'Authorization': `Bearer ${bearerToken}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -337,7 +373,7 @@ const FreeFireUpdate = () => {
             },
             {
               headers: {
-                'Authorization': `Bearer ${bearerToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               }
             }
@@ -396,107 +432,227 @@ const FreeFireUpdate = () => {
       return;
     }
 
-    if (supplierProducts.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Perhatian!',
-        text: 'Tidak ada produk Free Fire yang ditemukan untuk supplier ini',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
     setIsProcessing(true);
     setResults([]);
     setShowResults(false);
 
     try {
+      // 1. Fetch produk Free Fire langsung saat klik update
+      const productsResponse = await axios.get(
+        `${CONFIG.API_BASE_URL}/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Filter produk GMFF dan FFP
+      const gameProducts = productsResponse.data.filter(product => 
+        product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
+      );
+
+      if (gameProducts.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Perhatian!',
+          text: 'Tidak ada produk Free Fire yang ditemukan',
+          confirmButtonText: 'OK'
+        });
+        setIsProcessing(false);
+        return;
+      }
+
       const updateResults = [];
       const supplierRateNum = parseFloat(supplierRate);
       const sellPriceNum = parseFloat(sellPrice);
       const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
 
-      // Proses setiap produk supplier
-      for (const product of supplierProducts) {
+      // 2. Batch update semua produk secara paralel
+      const productUpdatePromises = supplierProducts.map(async (product) => {
         try {
           // Ekstrak denom dari kode produk
           const denom = extractDenomFromProductCode(product.code);
           
           if (!denom) {
-            updateResults.push({
+            return {
               status: 'error',
               product: product.name,
               product_code: product.code,
               error: `Tidak dapat mengekstrak denom dari produk ${product.name} (${product.code})`
-            });
-            continue;
+            };
           }
 
-          // Hitung harga berdasarkan rate supplier dan sell price
-          const calculatedPrice = Math.round((denom * supplierRateNum) / 1000);
-          const finalPrice = Math.round((denom * sellPriceNum) / 1000);
+          // Ambil jumlah GS dari mapping berdasarkan denom
+          const gsCount = DENOM_TO_GS[denom];
+          if (!gsCount) {
+            return {
+              status: 'error',
+              product: product.name,
+              product_code: product.code,
+              error: `Tidak ditemukan mapping GS untuk denom ${denom}`
+            };
+          }
+
+          // Hitung sesuai Excel: CEILING(rate ÷ 330) × jumlah_gs
+          const modalRatePerGS = Math.ceil(supplierRateNum / 330);
+          const sellRatePerGS = Math.ceil(sellPriceNum / 330);
+          const calculatedPrice = modalRatePerGS * gsCount; // Harga Modal
+          const finalPrice = sellRatePerGS * gsCount; // Harga Jual
           
           // Hitung margin
           const margin = finalPrice - calculatedPrice;
           const marginPercent = calculatedPrice > 0 ? ((margin / calculatedPrice) * 100).toFixed(2) : 0;
 
+          // Find corresponding game product untuk mendapatkan products_id yang benar
+          const correspondingGameProduct = gameProducts.find(gp => {
+            const gpDenom = extractDenomFromProductCode(gp.code);
+            return gpDenom === denom;
+          });
+
+          if (!correspondingGameProduct) {
+            return {
+              status: 'error',
+              product: product.name,
+              product_code: product.code,
+              error: `Game product tidak ditemukan untuk denom ${denom}`
+            };
+          }
+
+          // Ambil reseller group pricing untuk Level 1
+          const resellerGroups = await fetchResellersGroupPricing(correspondingGameProduct.id);
+          const level1Group = resellerGroups && Array.isArray(resellerGroups) 
+            ? resellerGroups.find(group => group.name === 'Level 1') 
+            : null;
+
+          // 3. Execute semua update secara paralel (4 API calls)
+          // Gunakan Promise.allSettled agar jika satu gagal, yang lain tetap jalan
+          const updatePromises = [
+            // Update 1: Supplier product base_price (harga modal)
+            axios.patch(
+              `${CONFIG.API_BASE_URL}/suppliers_products/${product.id}`,
+              {
+                id: product.id,
+                suppliers_id: selectedSupplier,
+                name: product.name,
+                code: product.code,
+                base_price: calculatedPrice, // Harga modal
+                status: product.status,
+                parameters: product.parameters || '',
+                trx_per_day: product.trx_per_day,
+                regex_custom_info: product.regex_custom_info || '',
+                updated_time: Math.floor(Date.now() / 1000)
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            ),
+            // Update 2: Product price (harga jual)
+            axios.post(
+              `${CONFIG.API_BASE_URL}/products/update_price`,
+              {
+                id: correspondingGameProduct.id,
+                price: finalPrice // Harga jual
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            ),
+            // Update 3: Supplier status
+            updateSupplierStatus(
+              correspondingGameProduct.id,
+              selectedSupplierData.name,
+              bearerToken
+            ),
+            // Update 4: Markup Level 1 reseller group (skip di localhost untuk hindari CORS)
+            level1Group && CAN_CALL_MARKUP
+              ? updateMarkup(level1Group.id, margin, bearerToken).catch(err => ({
+                  success: false,
+                  error: err.response?.data?.message || err.message || 'Markup update failed'
+                }))
+              : Promise.resolve({ success: false, error: level1Group ? 'Markup skipped in dev (localhost) to avoid CORS' : 'Level 1 reseller group not found' })
+          ];
+
+          const updateResults = await Promise.allSettled(updatePromises);
           
-          // Ambil reseller group pricing
-          const resellerGroups = await fetchResellersGroupPricing(product.id);
-          const level1Group = resellerGroups.find(group => group.name === 'Level 1');
+          // Extract results dengan error handling
+          const supplierProductResponse = updateResults[0].status === 'fulfilled' 
+            ? { data: updateResults[0].value.data } 
+            : { error: updateResults[0].reason?.response?.data?.message || updateResults[0].reason?.message || 'Supplier product update failed' };
+          
+          const productPriceResponse = updateResults[1].status === 'fulfilled' 
+            ? { data: updateResults[1].value.data } 
+            : { error: updateResults[1].reason?.response?.data?.message || updateResults[1].reason?.message || 'Product price update failed' };
+          
+          const supplierStatusResults = updateResults[2].status === 'fulfilled' 
+            ? updateResults[2].value 
+            : [{ status: 'error', error: updateResults[2].reason?.message || 'Supplier status update failed' }];
+          
+          const markupResult = updateResults[3].status === 'fulfilled' 
+            ? updateResults[3].value 
+            : { success: false, error: updateResults[3].reason?.message || updateResults[3].reason?.response?.data?.message || 'Markup update failed (502 Bad Gateway atau CORS error)' };
 
-          // Update harga produk
-          const priceResult = await updateProductPrice(product.id, finalPrice);
-
-          // Update markup jika ada Level 1 group
-          let markupResult = null;
-          if (level1Group) {
-            markupResult = await updateMarkup(level1Group.id, margin);
+          // Log error markup untuk debugging (tidak crash proses)
+          if (!markupResult.success) {
+            console.warn(`Markup update failed for product ${product.name}:`, markupResult.error);
           }
 
-          // Update supplier status
-          let supplierStatusResults = [];
-          if (selectedSupplierData) {
-            supplierStatusResults = await updateSupplierStatus(product.id, selectedSupplierData.name);
-          }
-
-          updateResults.push({
-            status: 'success',
+          // Tentukan status: success jika minimal supplier product dan price berhasil
+          const hasCriticalError = updateResults[0].status === 'rejected' && updateResults[1].status === 'rejected';
+          
+          return {
+            status: hasCriticalError ? 'error' : 'success',
             product: product.name,
             product_code: product.code,
             denom: denom,
-            old_price: product.price,
+            old_price: product.base_price || product.price,
             new_price: finalPrice,
             calculated_price: calculatedPrice,
             margin: margin,
             margin_percent: marginPercent,
             supplier_rate: supplierRateNum,
             sell_price: sellPriceNum,
-            price_result: priceResult,
-            markup_result: markupResult,
+            supplier_response: supplierProductResponse.data || supplierProductResponse.error,
+            price_response: productPriceResponse.data || productPriceResponse.error,
             supplier_status_results: supplierStatusResults,
-            level1_group_id: level1Group ? level1Group.id : null
-          });
+            markup_result: markupResult,
+            level1_group_id: level1Group ? level1Group.id : null,
+            products_id: correspondingGameProduct.id,
+            update_warnings: [
+              updateResults[0].status === 'rejected' ? 'Supplier product update failed' : null,
+              updateResults[1].status === 'rejected' ? 'Product price update failed' : null,
+              updateResults[2].status === 'rejected' ? 'Supplier status update failed' : null,
+              !markupResult.success ? `Markup update failed: ${markupResult.error}` : null
+            ].filter(Boolean)
+          };
 
         } catch (error) {
-          updateResults.push({
+          return {
             status: 'error',
             product: product.name,
             product_code: product.code,
-            error: error.message
-          });
+            error: error.response?.data?.message || error.message
+          };
         }
-
-        // Delay untuk menghindari rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      });
+      
+      // Wait for all product updates to complete
+      const productUpdateResults = await Promise.all(productUpdatePromises);
+      updateResults.push(...productUpdateResults);
 
       setResults(updateResults);
       setShowResults(true);
     } catch (error) {
       setResults([{
         status: 'error',
-        error: error.message
+        error: error.response?.data?.message || error.message
       }]);
       setShowResults(true);
     } finally {
@@ -645,27 +801,51 @@ const FreeFireUpdate = () => {
           </div>
 
           {/* Preview Calculation */}
-          {supplierRate && sellPrice && supplierProducts.length > 0 && (
+          {supplierRate && sellPrice && supplierProducts.length > 0 && (() => {
+            const supplierRateNum = parseFloat(supplierRate);
+            const sellPriceNum = parseFloat(sellPrice);
+            const invalidSamples = [];
+            const validProducts = supplierProducts.filter((product) => {
+              const denom = extractDenomFromProductCode(product.code);
+              const gsCount = denom ? DENOM_TO_GS[denom] : undefined;
+              const isValid = Boolean(denom) && Boolean(gsCount);
+              if (!isValid && invalidSamples.length < 5) {
+                invalidSamples.push({ code: product.code, denom, gsCount });
+              }
+              return isValid;
+            });
+
+            if (validProducts.length === 0) {
+              console.warn('FF Preview: Produk tanpa mapping Denom→GS (contoh maksimal 5):', invalidSamples);
+              return (
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">Preview Kalkulasi</h3>
+                  <p className="text-sm text-yellow-800">Tidak ada produk yang memiliki mapping Denom → GS yang valid.</p>
+                </div>
+              );
+            }
+
+            return (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-900 mb-2">Preview Kalkulasi</h3>
               <div className="space-y-3">
-                {supplierProducts.slice(0, 3).map((product) => {
+                  {(showAllPreview ? validProducts : validProducts.slice(0, 3)).map((product) => {
                   const denom = extractDenomFromProductCode(product.code);
-                  if (!denom) return null;
-                  
-                  const supplierRateNum = parseFloat(supplierRate);
-                  const sellPriceNum = parseFloat(sellPrice);
-                  const calculatedPrice = Math.round((denom * supplierRateNum) / 1000);
-                  const finalPrice = Math.round((denom * sellPriceNum) / 1000);
+                    const gsCount = denom ? DENOM_TO_GS[denom] : 0;
+                    const modalRatePerGS = Math.ceil(supplierRateNum / 330);
+                    const sellRatePerGS = Math.ceil(sellPriceNum / 330);
+                    const calculatedPrice = modalRatePerGS * gsCount;
+                    const finalPrice = sellRatePerGS * gsCount;
                   const margin = finalPrice - calculatedPrice;
                   const marginPercent = calculatedPrice > 0 ? ((margin / calculatedPrice) * 100).toFixed(2) : 0;
+                    // rate per GS (tanpa pembulatan) ditampilkan di rumus sebelumnya, tidak perlu variabel terpisah
                   
                   return (
                     <div key={product.id} className="bg-white p-3 rounded border">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold text-sm">{product.name}</p>
-                          <p className="text-xs text-gray-600">Denom: {denom}</p>
+                            <p className="text-xs text-gray-600">Denom: {denom} • GS: {gsCount}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-blue-600">Harga: Rp {finalPrice.toLocaleString()}</p>
@@ -675,19 +855,44 @@ const FreeFireUpdate = () => {
                           </p>
                         </div>
                       </div>
+                        <div className="mt-2 text-[11px] text-gray-600 leading-4">
+                          <p>
+                            Modal = ceil(RateModal ÷ 330) × GS = ceil({supplierRateNum.toLocaleString()} ÷ 330) × {gsCount} = {Math.ceil(supplierRateNum / 330)} × {gsCount} = Rp {calculatedPrice.toLocaleString()}
+                          </p>
+                          <p>
+                            Harga = ceil(RateJual ÷ 330) × GS = ceil({sellPriceNum.toLocaleString()} ÷ 330) × {gsCount} = {Math.ceil(sellPriceNum / 330)} × {gsCount} = Rp {finalPrice.toLocaleString()}
+                          </p>
+                        </div>
                     </div>
                   );
                 })}
-                {supplierProducts.length > 3 && (
-                  <p className="text-xs text-gray-600 text-center">
-                    ... dan {supplierProducts.length - 3} produk lainnya
-                  </p>
+                  {validProducts.length > 3 && (
+                    <div className="text-center">
+                      {!showAllPreview ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllPreview(true)}
+                          className="text-xs text-blue-600 hover:text-blue-700 underline"
+                        >
+                          ... dan {validProducts.length - 3} produk lainnya
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllPreview(false)}
+                          className="text-xs text-blue-600 hover:text-blue-700 underline"
+                        >
+                          Tampilkan lebih sedikit
+                        </button>
                 )}
               </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
             </div>
           )}
-        </div>
-      )}
 
       {/* Products */}
       {selectedSupplier && (
@@ -702,19 +907,26 @@ const FreeFireUpdate = () => {
             <p className="text-gray-500">Tidak ada produk</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {supplierProducts.slice(0, 48).map((item) => (
-                <div key={item.id} className="p-4 rounded-lg border bg-gray-50 h-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-800 mb-1">{item.name}</p>
-                      <p className="text-xs text-gray-600">Kode: {item.code}</p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p className="font-semibold text-green-700">Modal: Rp {item.base_price?.toLocaleString()}</p>
+              {supplierProducts.slice(0, 48).map((item) => {
+                const denom = extractDenomFromProductCode(item.code);
+                const gsCount = denom ? DENOM_TO_GS[denom] : undefined;
+                return (
+                  <div key={item.id} className="p-4 rounded-lg border bg-gray-50 h-full">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-800 mb-1">{item.name}</p>
+                        <p className="text-xs text-gray-600">Kode: {item.code}</p>
+                        {denom && gsCount && (
+                          <p className="text-xs text-gray-600">Denom: {denom} • GS: {gsCount}</p>
+                        )}
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="font-semibold text-green-700">Modal: Rp {item.base_price?.toLocaleString()}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {supplierProducts.length > 48 && (
                 <div className="col-span-full">
                   <p className="text-xs text-gray-600 text-center">... dan {supplierProducts.length - 48} produk lainnya</p>
@@ -791,8 +1003,8 @@ const FreeFireUpdate = () => {
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-gray-600">Denom</p>
-                            <p className="font-semibold">{result.denom}</p>
+                            <p className="text-gray-600">Denom / GS</p>
+                            <p className="font-semibold">{result.denom} • {DENOM_TO_GS[result.denom] || '-'} GS</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Harga Lama</p>
@@ -808,6 +1020,24 @@ const FreeFireUpdate = () => {
                               Rp {result.margin?.toLocaleString()} ({result.margin_percent}%)
                             </p>
                           </div>
+                        </div>
+                        <div className="mt-2 text-[11px] text-gray-600 leading-4">
+                          {(() => {
+                            const gsCount = DENOM_TO_GS[result.denom];
+                            if (!gsCount) return null;
+                            const modalRatePerGS = Math.ceil((result.supplier_rate || 0) / 330);
+                            const sellRatePerGS = Math.ceil((result.sell_price || 0) / 330);
+                            return (
+                              <>
+                                <p>
+                                  Modal = ceil(RateModal ÷ 330) × GS = ceil({(result.supplier_rate || 0).toLocaleString()} ÷ 330) × {gsCount} = {modalRatePerGS} × {gsCount} = Rp {result.calculated_price?.toLocaleString()}
+                                </p>
+                                <p>
+                                  Harga = ceil(RateJual ÷ 330) × GS = ceil({(result.sell_price || 0).toLocaleString()} ÷ 330) × {gsCount} = {sellRatePerGS} × {gsCount} = Rp {result.new_price?.toLocaleString()}
+                                </p>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div className="mt-2 text-xs text-gray-500 grid grid-cols-2 gap-4">
                           <div>
@@ -890,8 +1120,10 @@ const FreeFireUpdate = () => {
           <div>
             <h4 className="font-medium text-blue-800 mb-2">Formula Perhitungan:</h4>
             <ul className="space-y-1 text-sm text-blue-700">
-              <li>• Harga Modal = (Denom × Rate Supplier) ÷ 1000</li>
-              <li>• Harga Jual = (Denom × Harga Jual) ÷ 1000</li>
+              <li>• Jumlah GS ditentukan dari mapping Denom → GS</li>
+              <li>• Rate per GS = ROUNDUP(Rate per Denom ÷ 330)</li>
+              <li>• Harga Modal = RateGS(Modal) × Jumlah GS</li>
+              <li>• Harga Jual = RateGS(Jual) × Jumlah GS</li>
               <li>• Margin = Harga Jual - Harga Modal</li>
               <li>• Margin % = (Margin ÷ Harga Modal) × 100</li>
             </ul>

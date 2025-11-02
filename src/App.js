@@ -7,6 +7,7 @@ import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
 import FreeFireUpdate from './pages/FreeFireUpdate';
 import EMoneyUpdate from './pages/EMoneyUpdate';
 import IsimpleProduksi from './pages/IsimpleProduksi';
+import TriProduksi from './pages/TriProduksi';
 import { BearerTokenProvider } from './contexts/BearerTokenContext';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
                   <Route path="/freefire-update" element={<FreeFireUpdate />} />
                   <Route path="/emoney-update" element={<EMoneyUpdate />} />
                   <Route path="/isimple-produksi" element={<IsimpleProduksi />} />
+                  <Route path="/tri-produksi" element={<TriProduksi />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
