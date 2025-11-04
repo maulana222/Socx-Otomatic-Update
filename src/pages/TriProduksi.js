@@ -25,25 +25,32 @@ const TriProduksi = () => {
   const [matchedPackages, setMatchedPackages] = useState([]);
   const [editableStaticData, setEditableStaticData] = useState([]);
   const [searchPaket, setSearchPaket] = useState('');
+  const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [inputMode, setInputMode] = useState('nomor'); // 'nomor' atau 'excel'
 
   // Konfigurasi API
   const apiUrl = 'https://indotechapi.socx.app/api/v1/suppliers_modules/task';
 
   // Data statis Tri Rita berdasarkan response (harga dalam Rupiah)
   const triRitaStaticDataRaw = [
-    { name: "Tri Rita 5GB 2 Hari", price: 10000 },
-    { name: "Tri Rita 12GB 3 Hari", price: 15000 },
-    { name: "Tri Rita 10GB 5 Hari", price: 20000 },
-    { name: "Tri Rita 18GB 7 Hari", price: 30000 },
-    { name: "Tri Rita 15GB 28 Hari", price: 50000 },
-    { name: "Tri Rita 35GB 14 Hari", price: 50000 },
-    { name: "Tri Rita 30GB 28 Hari", price: 80000 },
-    { name: "Tri Rita 100GB 30 Hari", price: 100000 },
-    { name: "Tri Rita 150GB 30 Hari", price: 125000 },
-    { name: "Tri Rita 7GB 5 Hari", price: 15000 },
-    { name: "Tri Rita 60GB 30 Hari", price: 100000 },
-    { name: "Tri Rita 75GB 30 Hari", price: 120000 },
-    { name: "Tri Rita 100GB (50GB Nasional + 50GB InternetTri) 30 Hari", price: 150000 }
+    { name: "Tri Data Happy 5GB 2 Hari", price: 10000 },
+    { name: "Tri Data Happy 12GB 3 Hari", price: 15000 },
+    { name: "Tri Data Happy 10GB 5 Hari", price: 20000 },
+    { name: "Tri Data Happy 5GB 7 Hari", price: 20000 },
+    { name: "Tri Data Happy 8GB 7 Hari", price: 20000 },
+    { name: "Tri Data Happy 9GB 7 Hari", price: 20000 },
+    { name: "Tri Data Happy 10GB 7 Hari", price: 20000 },
+    { name: "Tri Data Happy 18GB 7 Hari", price: 30000 },
+    { name: "Tri Data Happy 15GB 28 Hari", price: 50000 },
+    { name: "Tri Data Happy 35GB 14 Hari", price: 50000 },
+    { name: "Tri Data Happy 30GB 28 Hari", price: 80000 },
+    { name: "Tri Data Happy 100GB 30 Hari", price: 100000 },
+    { name: "Tri Data Happy 150GB 30 Hari", price: 125000 },
+    { name: "Tri Data Happy 7GB 5 Hari", price: 15000 },
+    { name: "Tri Data Happy 60GB 30 Hari", price: 100000 },
+    { name: "Tri Data Happy 75GB 30 Hari", price: 120000 },
+    { name: "Tri Data Happy 100GB (50GB Nasional + 50GB InternetTri) 30 Hari", price: 150000 }
   ];
 
   // Fungsi untuk menghapus duplikat berdasarkan nama dan harga
@@ -261,6 +268,219 @@ const TriProduksi = () => {
     });
   };
 
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
+      if (fileExtension !== 'xlsx' && fileExtension !== 'xls') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Perhatian!',
+          text: 'Harap pilih file Excel (.xlsx atau .xls)',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+      setFile(selectedFile);
+    }
+  };
+
+  const validateExcelData = (data) => {
+    const errors = [];
+    const requiredColumns = [
+      'Type',
+      'Offer Id',
+      'Offer Short Desc',
+      'Product Price',
+      'Registration Key',
+      'Net Price',
+      'Parameter',
+      'Jumlah Nomor'
+    ];
+
+    // Check if all required columns exist
+    if (data.length === 0) {
+      errors.push('File Excel kosong atau tidak memiliki data');
+      return { errors, validatedData: [] };
+    }
+
+    const firstRow = data[0];
+    const missingColumns = requiredColumns.filter(col => 
+      !firstRow.hasOwnProperty(col) && 
+      !firstRow.hasOwnProperty(col.toLowerCase()) &&
+      !firstRow.hasOwnProperty(col.replace(/\s+/g, ''))
+    );
+
+    if (missingColumns.length > 0) {
+      errors.push(`Kolom yang hilang: ${missingColumns.join(', ')}`);
+      return { errors, validatedData: [] };
+    }
+
+    // Normalize column names (handle case sensitivity and spaces)
+    const normalizedData = data.map((row, index) => {
+      const normalizedRow = {};
+      const rowNumber = index + 2; // +2 karena index mulai dari 0 dan Excel punya header
+
+      // Helper function to find column value
+      const getColumnValue = (colName) => {
+        return row[colName] || 
+               row[colName.toLowerCase()] || 
+               row[colName.replace(/\s+/g, '')] ||
+               row[colName.replace(/\s+/g, '').toLowerCase()];
+      };
+
+      normalizedRow.type = getColumnValue('Type') || '';
+      normalizedRow.offerId = getColumnValue('Offer Id') || '';
+      normalizedRow.offerShortDesc = getColumnValue('Offer Short Desc') || '';
+      normalizedRow.productPrice = getColumnValue('Product Price') || '';
+      normalizedRow.registrationKey = getColumnValue('Registration Key') || '';
+      normalizedRow.netPrice = getColumnValue('Net Price') || '';
+      normalizedRow.parameter = getColumnValue('Parameter') || '';
+      normalizedRow.jumlahNomor = getColumnValue('Jumlah Nomor') || 0;
+
+      // Validate required fields
+      const rowErrors = [];
+      if (!normalizedRow.registrationKey && !normalizedRow.offerId) {
+        rowErrors.push('Registration Key atau Offer Id harus diisi');
+      }
+      if (isNaN(Number(normalizedRow.jumlahNomor))) {
+        rowErrors.push('Jumlah Nomor harus berupa angka');
+      }
+
+      if (rowErrors.length > 0) {
+        errors.push({
+          row: rowNumber,
+          errors: rowErrors
+        });
+        return null;
+      }
+
+      return normalizedRow;
+    }).filter(Boolean);
+
+    return { errors, validatedData: normalizedData };
+  };
+
+  const processExcelFile = async () => {
+    if (!file) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Perhatian!',
+        text: 'Harap pilih file Excel terlebih dahulu',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setResults([]);
+    setPaketUnik({});
+    setPaketCount({});
+    setShowResults(false);
+
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            resolve(jsonData);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsBinaryString(file);
+      });
+
+      const { errors, validatedData } = validateExcelData(data);
+
+      if (errors.length > 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error Validasi!',
+          html: `Terjadi kesalahan validasi:<br/>${errors.map(e => 
+            typeof e === 'string' ? e : `Baris ${e.row}: ${e.errors.join(', ')}`
+          ).join('<br/>')}`,
+          confirmButtonText: 'OK'
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Process validated data
+      const tempPaketUnik = {};
+      const tempPaketCount = {};
+
+      validatedData.forEach(row => {
+        const key = row.registrationKey || row.offerId;
+        if (key) {
+          // Parse parameter jika berupa JSON string
+          let parameterObj = {};
+          if (row.parameter) {
+            try {
+              parameterObj = typeof row.parameter === 'string' 
+                ? JSON.parse(row.parameter) 
+                : row.parameter;
+            } catch (e) {
+              // Jika bukan JSON, buat object dari parameter
+              parameterObj = { type: row.type || 'special_offer' };
+            }
+          } else {
+            parameterObj = { type: row.type || 'special_offer' };
+          }
+
+          // Set paket unik
+          if (!tempPaketUnik[key]) {
+            tempPaketUnik[key] = {
+              offerId: row.offerId || '',
+              offerShortDesc: row.offerShortDesc || '',
+              productPrice: row.productPrice || '',
+              productType: row.type || 'special_offer',
+              registrationKey: row.registrationKey || '',
+              netPrice: row.netPrice || '',
+              recommendationName: row.offerShortDesc || '',
+              offerDescription: row.offerShortDesc || '',
+              validity: parameterObj.validity || '',
+              parameter: row.parameter || JSON.stringify(parameterObj)
+            };
+            tempPaketCount[key] = 0;
+          }
+
+          // Set jumlah nomor
+          const jumlahNomor = Number(row.jumlahNomor) || 0;
+          tempPaketCount[key] = (tempPaketCount[key] || 0) + jumlahNomor;
+        }
+      });
+
+      setPaketUnik(tempPaketUnik);
+      setPaketCount(tempPaketCount);
+      setShowResults(true);
+      setFile(null); // Reset file input
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: `Berhasil memproses ${validatedData.length} baris data dan menemukan ${Object.keys(tempPaketUnik).length} paket unik`,
+        confirmButtonText: 'OK'
+      });
+
+    } catch (error) {
+      console.error('Error processing file:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Terjadi kesalahan saat memproses file: ${error.message}`,
+        confirmButtonText: 'OK'
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const resetForm = () => {
     setNomorList('');
     setResults([]);
@@ -278,6 +498,10 @@ const TriProduksi = () => {
     setMatchedPackages([]);
     setEditableStaticData([]);
     setSearchPaket('');
+    setFile(null);
+    setInputMode('nomor');
+    const fileInput = document.getElementById('excel-file');
+    if (fileInput) fileInput.value = '';
   };
 
   // Fungsi untuk mendapatkan data yang akan ditampilkan (Paket Unik)
@@ -479,14 +703,14 @@ const TriProduksi = () => {
       // Cari semua paket yang cocok dengan data statis ini
       paketArray.forEach(paket => {
         const packageInfo = extractPackageInfo(paket.offerShortDesc || paket.recommendationName || '');
-        const netPrice = parseFloat(paket.netPrice) || 0;
+        const productPrice = parseFloat(paket.productPrice) || 0;
         
         // Cek apakah paket cocok berdasarkan GB dan hari
         if (packageInfo.gb >= staticInfo.gb && 
             packageInfo.days >= staticInfo.days && 
-            netPrice <= staticItem.price) {
+            productPrice <= staticItem.price) {
           
-          console.log(`Paket cocok: ${paket.offerShortDesc || paket.recommendationName} (${packageInfo.gb}GB, ${packageInfo.days} hari, harga: Rp ${netPrice})`);
+          console.log(`Paket cocok: ${paket.offerShortDesc || paket.recommendationName} (${packageInfo.gb}GB, ${packageInfo.days} hari, harga: Rp ${productPrice})`);
           
           // Buat key unik untuk paket berdasarkan registrationKey atau offerId
           const packageKey = `${paket.registrationKey || paket.offerId}`;
@@ -498,12 +722,13 @@ const TriProduksi = () => {
             matchingPackages.push({
               packageName: paket.offerShortDesc || paket.recommendationName,
               packageCode: paket.registrationKey || paket.offerId,
-              packageAmount: netPrice,
+              packageAmount: productPrice,
               packageType: paket.productType,
               packageOfferId: paket.offerId,
               packageCount: paketCount[key] || 0,
               packageInfo: packageInfo,
-              savings: staticItem.price - netPrice
+              parameter: paket.parameter || '',
+              savings: staticItem.price - productPrice
             });
           }
         }
@@ -570,6 +795,37 @@ const TriProduksi = () => {
     });
   };
 
+  // Fungsi untuk copy urutan paket
+  const copyPaketRow = (paket) => {
+    // Format: base_price	code	name	parameters
+    const basePrice = paket.productPrice || '';
+    const code = paket.registrationKey || paket.offerId || '';
+    const name = paket.offerShortDesc || paket.recommendationName || '';
+    const parameters = paket.parameter || '';
+    
+    const copyText = `${basePrice}\t${code}\t${name}\t${parameters}`;
+
+    navigator.clipboard.writeText(copyText).then(() => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data paket berhasil di-copy ke clipboard',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }).catch(err => {
+      console.error('Error copying to clipboard:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'Gagal menyalin ke clipboard',
+        confirmButtonText: 'OK'
+      });
+    });
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Back Button */}
@@ -618,46 +874,150 @@ const TriProduksi = () => {
 
       {/* Input Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Input Nomor Telepon</h2>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="nomor-list" className="block text-sm font-medium text-gray-700 mb-2">
-              Daftar Nomor (satu nomor per baris)
-            </label>
-            <textarea
-              id="nomor-list"
-              value={nomorList}
-              onChange={(e) => setNomorList(e.target.value)}
-              rows={10}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="Masukkan nomor telepon, satu nomor per baris&#10;Contoh:&#10;089677549509&#10;081617409145&#10;081553605978"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Masukkan nomor telepon yang akan dicek, satu nomor per baris
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={processNumbers}
-              disabled={!bearerToken || isProcessing || !nomorList.trim()}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                !bearerToken || isProcessing || !nomorList.trim()
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-primary-600 text-white hover:bg-primary-700'
-              }`}
-            >
-              {isProcessing ? 'Memproses...' : 'Cek Nomor'}
-            </button>
-            
-            <button
-              onClick={resetForm}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
-            >
-              Reset
-            </button>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Input Data Tri Produksi</h2>
+        
+        {/* Tabs untuk pilih metode input */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => {
+                  setInputMode('nomor');
+                  setFile(null);
+                  const fileInput = document.getElementById('excel-file');
+                  if (fileInput) fileInput.value = '';
+                }}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  inputMode === 'nomor' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📱 Cek Nomor
+              </button>
+              <button
+                onClick={() => {
+                  setInputMode('excel');
+                  setNomorList('');
+                }}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  inputMode === 'excel' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📊 Upload Excel
+              </button>
+            </nav>
           </div>
         </div>
+
+        {/* Input Nomor Telepon */}
+        {inputMode === 'nomor' && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="nomor-list" className="block text-sm font-medium text-gray-700 mb-2">
+                Daftar Nomor (satu nomor per baris)
+              </label>
+              <textarea
+                id="nomor-list"
+                value={nomorList}
+                onChange={(e) => setNomorList(e.target.value)}
+                rows={10}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Masukkan nomor telepon, satu nomor per baris&#10;Contoh:&#10;089677549509&#10;081617409145&#10;081553605978"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Masukkan nomor telepon yang akan dicek, satu nomor per baris
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={processNumbers}
+                disabled={!bearerToken || isProcessing || !nomorList.trim()}
+                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                  !bearerToken || isProcessing || !nomorList.trim()
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                }`}
+              >
+                {isProcessing ? 'Memproses...' : 'Cek Nomor'}
+              </button>
+              
+              <button
+                onClick={resetForm}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Excel */}
+        {inputMode === 'excel' && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="excel-file" className="block text-sm font-medium text-gray-700 mb-2">
+                Upload File Excel
+              </label>
+              <div className="flex items-center space-x-4">
+                <input
+                  type="file"
+                  id="excel-file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-primary-50 file:text-primary-700
+                    hover:file:bg-primary-100"
+                />
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                File Excel harus memiliki kolom: Type, Offer Id, Offer Short Desc, Product Price, Registration Key, Net Price, Parameter, Jumlah Nomor
+              </p>
+              {file && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-sm text-green-800">
+                    ✓ File dipilih: <span className="font-semibold">{file.name}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={processExcelFile}
+                disabled={!bearerToken || isUploading || !file}
+                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                  !bearerToken || isUploading || !file
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                }`}
+              >
+                {isUploading ? 'Memproses...' : 'Proses Excel'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setFile(null);
+                  const fileInput = document.getElementById('excel-file');
+                  if (fileInput) fileInput.value = '';
+                }}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+              
+              <button
+                onClick={resetForm}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Progress Bar */}
@@ -929,20 +1289,20 @@ const TriProduksi = () => {
                       </th>
                       <th 
                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('netPrice')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Net Price</span>
-                          {getSortIcon('netPrice', sortConfig)}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 cursor-pointer hover:bg-gray-100"
                         onClick={() => handleSort('productPrice')}
                       >
                         <div className="flex items-center space-x-1">
                           <span>Product Price</span>
                           {getSortIcon('productPrice', sortConfig)}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('netPrice')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Net Price</span>
+                          {getSortIcon('netPrice', sortConfig)}
                         </div>
                       </th>
                       <th 
@@ -963,16 +1323,19 @@ const TriProduksi = () => {
                           {getSortIcon('validity', sortConfig)}
                         </div>
                       </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('jumlah_nomor')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Jumlah Nomor</span>
-                          {getSortIcon('jumlah_nomor', sortConfig)}
-                        </div>
-                      </th>
-                    </tr>
+                       <th 
+                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                         onClick={() => handleSort('jumlah_nomor')}
+                       >
+                         <div className="flex items-center space-x-1">
+                           <span>Jumlah Nomor</span>
+                           {getSortIcon('jumlah_nomor', sortConfig)}
+                         </div>
+                       </th>
+                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         Aksi
+                       </th>
+                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {getDisplayData().map((paket, index) => {
@@ -995,10 +1358,10 @@ const TriProduksi = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
-                            <span className="font-semibold">Rp {parseFloat(paket.netPrice || 0).toLocaleString('id-ID')}</span>
+                            <span className="font-semibold">Rp {parseFloat(paket.productPrice || 0).toLocaleString('id-ID')}</span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
-                            <span>Rp {parseFloat(paket.productPrice || 0).toLocaleString('id-ID')}</span>
+                            <span>Rp {parseFloat(paket.netPrice || 0).toLocaleString('id-ID')}</span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                             {paket.productType}
@@ -1006,14 +1369,26 @@ const TriProduksi = () => {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                             {paket.validity} hari
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {paketCount[key] || 0} nomor
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                               {paketCount[key] || 0} nomor
+                             </span>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                             <button
+                               onClick={() => copyPaketRow(paket)}
+                               className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                               title="Copy urutan paket (base_price, code, name, parameters)"
+                             >
+                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                               </svg>
+                               Copy
+                             </button>
+                           </td>
+                         </tr>
+                       );
+                     })}
                   </tbody>
                 </table>
               </div>
@@ -1252,10 +1627,13 @@ const TriProduksi = () => {
                              Harga Paket
                            </th>
                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
-                             Penghematan
+                             Parameter
+                           </th>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                             Jumlah Nomor
                            </th>
                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                             Jumlah Nomor
+                             Aksi
                            </th>
                          </tr>
                        </thead>
@@ -1280,15 +1658,63 @@ const TriProduksi = () => {
                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                                <span className="font-semibold">Rp {packageItem.packageAmount.toLocaleString('id-ID')}</span>
                              </td>
-                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
-                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                 Rp {packageItem.savings.toLocaleString('id-ID')}
-                               </span>
+                             <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
+                               <div className="max-w-xs">
+                                 <div className="truncate text-xs" title={packageItem.parameter || ''}>
+                                   {packageItem.parameter || '-'}
+                                 </div>
+                               </div>
                              </td>
-                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                  {packageItem.packageCount} nomor
                                </span>
+                             </td>
+                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                               <button
+                                 onClick={() => {
+                                   // Ambil data paket dari paketUnik berdasarkan packageCode
+                                   const paketData = Object.values(paketUnik).find(p => 
+                                     (p.registrationKey || p.offerId) === packageItem.packageCode
+                                   );
+                                   if (paketData) {
+                                     copyPaketRow(paketData);
+                                   } else {
+                                     // Fallback: copy dari data yang ada
+                                     const basePrice = packageItem.packageAmount || '';
+                                     const code = packageItem.packageCode || '';
+                                     const name = packageItem.packageName || '';
+                                     const parameters = packageItem.parameter || '';
+                                     const copyText = `${basePrice}\t${code}\t${name}\t${parameters}`;
+                                     navigator.clipboard.writeText(copyText).then(() => {
+                                       Swal.fire({
+                                         icon: 'success',
+                                         title: 'Berhasil!',
+                                         text: 'Data paket berhasil di-copy ke clipboard',
+                                         timer: 2000,
+                                         showConfirmButton: false,
+                                         toast: true,
+                                         position: 'top-end'
+                                       });
+                                     }).catch(err => {
+                                       console.error('Error copying to clipboard:', err);
+                                       Swal.fire({
+                                         icon: 'error',
+                                         title: 'Error!',
+                                         text: 'Gagal menyalin ke clipboard',
+                                         confirmButtonText: 'OK'
+                                       });
+                                     });
+                                   }
+                                 }}
+                                 className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                                 title="Copy urutan paket (base_price, code, name, parameters)"
+                               >
+                                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                 </svg>
+                                 Copy
+                               </button>
                              </td>
                            </tr>
                          ))}
@@ -1311,21 +1737,37 @@ const TriProduksi = () => {
       {/* Information */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-blue-900 mb-4">Panduan Penggunaan</h3>
-        <ol className="list-decimal list-inside space-y-2 text-blue-800">
-          <li>Masukkan nomor telepon yang akan dicek (satu nomor per baris)</li>
-          <li>Klik tombol "Cek Nomor" untuk memulai pengecekan</li>
-          <li>Tunggu proses selesai (setiap nomor akan dicek dengan delay 500ms)</li>
-          <li>Lihat hasil pengecekan dan paket unik yang ditemukan</li>
-          <li>Download hasil dalam format Excel untuk analisis lebih lanjut</li>
-        </ol>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-medium text-blue-900 mb-2">Metode 1: Cek Nomor</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
+              <li>Masukkan nomor telepon yang akan dicek (satu nomor per baris)</li>
+              <li>Klik tombol "Cek Nomor" untuk memulai pengecekan</li>
+              <li>Tunggu proses selesai (setiap nomor akan dicek dengan delay 500ms)</li>
+              <li>Lihat hasil pengecekan dan paket unik yang ditemukan</li>
+              <li>Download hasil dalam format Excel untuk analisis lebih lanjut</li>
+            </ol>
+          </div>
+          <div>
+            <h4 className="font-medium text-blue-900 mb-2">Metode 2: Upload Excel</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
+              <li>Pilih tab "Upload Excel"</li>
+              <li>Upload file Excel dengan kolom: Type, Offer Id, Offer Short Desc, Product Price, Registration Key, Net Price, Parameter, Jumlah Nomor</li>
+              <li>Klik tombol "Proses Excel" untuk memproses data</li>
+              <li>Data akan langsung ditampilkan sebagai paket unik</li>
+              <li>Jumlah Nomor akan dijumlahkan jika ada paket dengan Registration Key yang sama</li>
+            </ol>
+          </div>
+        </div>
         <div className="mt-4">
           <h4 className="font-medium text-blue-900 mb-1">Catatan:</h4>
           <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
             <li>Pastikan Bearer Token sudah diset di header</li>
-            <li>Proses pengecekan membutuhkan waktu tergantung jumlah nomor</li>
+            <li>Proses pengecekan nomor membutuhkan waktu tergantung jumlah nomor</li>
             <li><strong>Data paket unik akan dikelompokkan berdasarkan registrationKey atau offerId (kode harus unik)</strong></li>
             <li>Jika ada kode yang sama, hanya akan ditampilkan sekali</li>
             <li>File Excel akan berisi semua paket unik yang ditemukan</li>
+            <li>Untuk upload Excel, kolom Parameter bisa berupa JSON string atau akan di-generate otomatis</li>
           </ul>
         </div>
       </div>
