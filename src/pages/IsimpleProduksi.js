@@ -278,13 +278,13 @@ const IsimpleProduksi = () => {
   const validateExcelData = (data) => {
     const errors = [];
     const requiredColumns = [
-      'Name',
-      'Amount',
-      'Type',
-      'Type Title',
-      'DNM Code',
-      'Commission',
-      'Jumlah Nomor'
+      'name',
+      'amount',
+      'type',
+      'typetitle',
+      'dnmcode',
+      'commision',
+      'jumlah_nomor'
     ];
 
     // Check if all required columns exist
@@ -294,45 +294,71 @@ const IsimpleProduksi = () => {
     }
 
     const firstRow = data[0];
-    const missingColumns = requiredColumns.filter(col => 
-      !firstRow.hasOwnProperty(col) && 
-      !firstRow.hasOwnProperty(col.toLowerCase()) &&
-      !firstRow.hasOwnProperty(col.replace(/\s+/g, ''))
-    );
+    // Check dengan berbagai variasi nama kolom (case insensitive, dengan/tanpa underscore, dengan/tanpa spasi)
+    const missingColumns = requiredColumns.filter(col => {
+      const variations = [
+        col,
+        col.toLowerCase(),
+        col.toUpperCase(),
+        col.replace(/_/g, ' '),
+        col.replace(/_/g, '').toLowerCase(),
+        col.charAt(0).toUpperCase() + col.slice(1).replace(/_/g, ' ')
+      ];
+      return !variations.some(variation => firstRow.hasOwnProperty(variation));
+    });
 
     if (missingColumns.length > 0) {
       errors.push(`Kolom yang hilang: ${missingColumns.join(', ')}`);
       return { errors, validatedData: [] };
     }
 
-    // Normalize column names (handle case sensitivity and spaces)
+    // Normalize column names (handle case sensitivity, spaces, and underscores)
     const normalizedData = data.map((row, index) => {
       const normalizedRow = {};
       const rowNumber = index + 2; // +2 karena index mulai dari 0 dan Excel punya header
 
-      // Helper function to find column value
+      // Helper function to find column value dengan berbagai variasi
       const getColumnValue = (colName) => {
-        return row[colName] || 
-               row[colName.toLowerCase()] || 
-               row[colName.replace(/\s+/g, '')] ||
-               row[colName.replace(/\s+/g, '').toLowerCase()];
+        const variations = [
+          colName,
+          colName.toLowerCase(),
+          colName.toUpperCase(),
+          colName.replace(/_/g, ' '),
+          colName.replace(/_/g, ''),
+          colName.charAt(0).toUpperCase() + colName.slice(1).replace(/_/g, ' '),
+          // Variasi dengan spasi
+          colName.replace(/_/g, ' '),
+          colName.replace(/_/g, ' ').toLowerCase(),
+          colName.replace(/_/g, ' ').toUpperCase(),
+          // Variasi tanpa underscore
+          colName.replace(/_/g, ''),
+          colName.replace(/_/g, '').toLowerCase(),
+          colName.replace(/_/g, '').toUpperCase()
+        ];
+        
+        for (const variation of variations) {
+          if (row.hasOwnProperty(variation)) {
+            return row[variation];
+          }
+        }
+        return '';
       };
 
-      normalizedRow.name = getColumnValue('Name') || '';
-      normalizedRow.amount = getColumnValue('Amount') || '';
-      normalizedRow.type = getColumnValue('Type') || '';
-      normalizedRow.typetitle = getColumnValue('Type Title') || '';
-      normalizedRow.dnmcode = getColumnValue('DNM Code') || '';
-      normalizedRow.commission = getColumnValue('Commission') || '';
-      normalizedRow.jumlahNomor = getColumnValue('Jumlah Nomor') || 0;
+      normalizedRow.name = getColumnValue('name') || '';
+      normalizedRow.amount = getColumnValue('amount') || '';
+      normalizedRow.type = getColumnValue('type') || '';
+      normalizedRow.typetitle = getColumnValue('typetitle') || '';
+      normalizedRow.dnmcode = getColumnValue('dnmcode') || '';
+      normalizedRow.commission = getColumnValue('commision') || '';
+      normalizedRow.jumlahNomor = getColumnValue('jumlah_nomor') || 0;
 
       // Validate required fields
       const rowErrors = [];
       if (!normalizedRow.dnmcode) {
-        rowErrors.push('DNM Code harus diisi');
+        rowErrors.push('dnmcode harus diisi');
       }
       if (isNaN(Number(normalizedRow.jumlahNomor))) {
-        rowErrors.push('Jumlah Nomor harus berupa angka');
+        rowErrors.push('jumlah_nomor harus berupa angka');
       }
 
       if (rowErrors.length > 0) {
@@ -896,7 +922,7 @@ const IsimpleProduksi = () => {
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                File Excel harus memiliki kolom: Name, Amount, Type, Type Title, DNM Code, Commission, Jumlah Nomor
+                File Excel harus memiliki kolom: name, amount, type, typetitle, dnmcode, commision, jumlah_nomor
               </p>
               {file && (
                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
@@ -1610,7 +1636,7 @@ const IsimpleProduksi = () => {
             <h4 className="font-medium text-blue-900 mb-2">Metode 2: Upload Excel</h4>
             <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
               <li>Pilih tab "Upload Excel"</li>
-              <li>Upload file Excel dengan kolom: Name, Amount, Type, Type Title, DNM Code, Commission, Jumlah Nomor</li>
+              <li>Upload file Excel dengan kolom: name, amount, type, typetitle, dnmcode, commision, jumlah_nomor</li>
               <li>Klik tombol "Proses Excel" untuk memproses data</li>
               <li>Data akan langsung ditampilkan sebagai paket unik</li>
               <li>Jumlah Nomor akan dijumlahkan jika ada paket dengan DNM Code yang sama</li>
