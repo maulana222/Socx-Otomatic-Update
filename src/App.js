@@ -1,6 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import ProductUpdate from './pages/ProductUpdate';
 import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
@@ -8,27 +11,75 @@ import FreeFireUpdate from './pages/FreeFireUpdate';
 import EMoneyUpdate from './pages/EMoneyUpdate';
 import IsimpleProduksi from './pages/IsimpleProduksi';
 import TriProduksi from './pages/TriProduksi';
+import SocxTokenManager from './pages/SocxTokenManager';
 import { BearerTokenProvider } from './contexts/BearerTokenContext';
 
 function App() {
   return (
     <BearerTokenProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Header />
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/product-update" element={<ProductUpdate />} />
-                  <Route path="/pulsa-transfer-update" element={<PulsaTransferUpdate />} />
-                  <Route path="/freefire-update" element={<FreeFireUpdate />} />
-                  <Route path="/emoney-update" element={<EMoneyUpdate />} />
-                  <Route path="/isimple-produksi" element={<IsimpleProduksi />} />
-                  <Route path="/tri-produksi" element={<TriProduksi />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
+        <Routes>
+          {/* Login route - no header, no container */}
+          <Route path="/login" element={<Login />} />
+
+          {/* All other routes with header and container */}
+          <Route path="*" element={
+            <div className="min-h-screen bg-gray-50">
+              <Header />
+              <main className="container mx-auto px-4 py-8">
+                <Routes>
+                  {/* Protected routes */}
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/product-update" element={
+                    <ProtectedRoute>
+                      <ProductUpdate />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/pulsa-transfer-update" element={
+                    <ProtectedRoute>
+                      <PulsaTransferUpdate />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/freefire-update" element={
+                    <ProtectedRoute>
+                      <FreeFireUpdate />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/emoney-update" element={
+                    <ProtectedRoute>
+                      <EMoneyUpdate />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/isimple-produksi" element={
+                    <ProtectedRoute>
+                      <IsimpleProduksi />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/tri-produksi" element={
+                    <ProtectedRoute>
+                      <TriProduksi />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/socx-token" element={
+                    <ProtectedRoute>
+                      <SocxTokenManager />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </div>
+          } />
+        </Routes>
       </Router>
     </BearerTokenProvider>
   );

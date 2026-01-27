@@ -1,14 +1,31 @@
 const axios = require('axios');
 const fs = require('fs');
 
-// Konfigurasi
-const CONFIG = {
-  API_BASE_URL: 'https://indotechapi.socx.app/api/v1',
-  BEARER_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTgwNDY2NjAsImlkIjozLCJuYW1lIjoic2FoYW5kcmlhbjlAZ21haWwuY29tIiwib3RwIjoiMSIsInJvbGUiOiJhZG1pbmlzdHJhdG9yIiwidHlwZSI6bnVsbH0.CdWwYqXWc9YfdCAPxCvzI1y7RFQLcGQ74G8k1tuX3yE',
+// Konfigurasi Backend API
+const BACKEND_API_BASE_URL = 'http://localhost:3000/api';
+
+// Variabel untuk menyimpan token (akan diambil dari backend)
+let CONFIG = {
+  API_BASE_URL: 'https://socxapi.socx.app/api/v1',
+  BEARER_TOKEN: null,
   SUPPLIER_ID: 33,
   LOG_FILE: 'addproduksupplier_log.txt',
   DRY_RUN: false
 };
+
+// Fungsi untuk load token
+async function loadToken() {
+  // Prioritas: 1. Environment variable
+  if (process.env.SOCX_API_TOKEN) {
+    CONFIG.BEARER_TOKEN = process.env.SOCX_API_TOKEN;
+    console.log('✅ Menggunakan token dari environment variable');
+    return;
+  }
+  
+  throw new Error('Token tidak ditemukan. Silakan set SOCX_API_TOKEN environment variable');
+}
+
+// Fungsi untuk log ke file dan console
 
 // Data produk Free Fire yang akan ditambahkan
 const FREE_FIRE_PRODUCTS = [
@@ -263,6 +280,18 @@ async function main() {
   if (args.includes('--dry-run')) {
     CONFIG.DRY_RUN = true;
     log('Mode DRY RUN diaktifkan - tidak akan menambahkan produk nyata');
+  }
+
+  // Load token sebelum memproses
+  try {
+    await loadToken();
+  } catch (error) {
+    console.error(`\n❌ Error: ${error.message}`);
+    console.error('\n⚠️  Cara menggunakan script:');
+    console.error('   1. Set environment variable SOCX_API_TOKEN dengan token Socx Anda');
+    console.error('   2. Atau set token via halaman Socx Token di aplikasi web');
+    console.error('   3. Gunakan parameter --help untuk informasi lebih lanjut\n');
+    process.exit(1);
   }
   
   try {

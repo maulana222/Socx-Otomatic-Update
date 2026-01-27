@@ -1,23 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
+import Swal from 'sweetalert2';
 
 const Header = () => {
-  const [showTokenInput, setShowTokenInput] = useState(false);
-  const [tempToken, setTempToken] = useState('');
-  const { bearerToken, updateBearerToken, clearBearerToken } = useBearerToken();
+  const [user, setUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { bearerToken, clearBearerToken } = useBearerToken();
+  const navigate = useNavigate();
 
-  const handleSaveToken = () => {
-    if (tempToken.trim()) {
-      updateBearerToken(tempToken.trim());
-      setTempToken('');
-      setShowTokenInput(false);
+  // Load user data from localStorage
+  useEffect(() => {
+    if (bearerToken) {
+      const savedUser = localStorage.getItem('socx_user');
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('socx_user');
+        }
+      }
+    } else {
+      setUser(null);
     }
-  };
+  }, [bearerToken]);
 
-  const handleClearToken = () => {
-    clearBearerToken();
-    setTempToken('');
-    setShowTokenInput(false);
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Logout Confirmation',
+      text: 'Are you sure you want to logout?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, logout',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        clearBearerToken();
+        localStorage.removeItem('socx_user');
+        setUser(null);
+        setShowUserMenu(false);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Logged out successfully',
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        // Redirect to login page
+        navigate('/login');
+      }
+    });
   };
 
   
@@ -36,73 +72,96 @@ const Header = () => {
           {/* Navigation removed as requested */}
           <div></div>
 
-          {/* Bearer Token Section */}
+          {/* User Menu Section */}
           <div className="flex items-center space-x-4">
-            {bearerToken ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Token: {bearerToken.substring(0, 20)}...</span>
+            {bearerToken && user ? (
+              <div className="relative">
                 <button
-                  onClick={() => setShowTokenInput(true)}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
                 >
-                  Edit
+                  <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+                    {user.firstName?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-gray-700">
+                    {user.firstName} {user.lastName}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
-                <button
-                  onClick={handleClearToken}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                >
-                  Clear
-                </button>
+
+                {/* User Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <p className="text-xs text-gray-500 capitalize">Role: {user.role}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setShowUserMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Profile
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/socx-token');
+                        setShowUserMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        Socx Token
+                      </div>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                      </div>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button
-                onClick={() => setShowTokenInput(true)}
-                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
               >
-                Set Bearer Token
+                Login
               </button>
             )}
           </div>
         </div>
-
-        {/* Token Input Modal */}
-        {showTokenInput && (
-          <div className="py-4 border-t border-gray-200">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <label htmlFor="bearer-token" className="block text-sm font-medium text-gray-700 mb-1">
-                  Bearer Token
-                </label>
-                <input
-                  type="text"
-                  id="bearer-token"
-                  value={tempToken}
-                  onChange={(e) => setTempToken(e.target.value)}
-                  placeholder="Enter your Bearer token here..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex items-end space-x-2">
-                <button
-                  onClick={handleSaveToken}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setShowTokenInput(false);
-                    setTempToken('');
-                  }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Click outside to close menu */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setShowUserMenu(false)}
+        ></div>
+      )}
     </header>
   );
 };
