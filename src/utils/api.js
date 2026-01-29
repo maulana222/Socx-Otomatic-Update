@@ -1,5 +1,5 @@
 // API utility for handling backend communication
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3000/api';
 
 class ApiClient {
   constructor() {
@@ -14,7 +14,9 @@ class ApiClient {
 
   // Generic request method
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${this.baseURL}${endpoint}`; 
+    const apiTimeout = process.env.REACT_APP_API_TIMEOUT || 30000;
+    
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +27,16 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(url, config);
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), apiTimeout);
+      
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (!response.ok) {
@@ -47,6 +58,11 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error('API request failed:', error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout: Server took too long to respond');
+      }
+      
       throw error;
     }
   }
