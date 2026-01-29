@@ -109,7 +109,7 @@ REACT_APP_DEBUG=true
 
 ### `.env.production` (Production)
 ```env
-REACT_APP_BACKEND_URL=http://indotechapi.api.digiprosb.id/api
+REACT_APP_BACKEND_URL=http://indotech.api.digiprosb.id/api
 REACT_APP_ENV=production
 REACT_APP_DEBUG=false
 ```
@@ -218,8 +218,8 @@ grep -r "indotechapi.api.digiprosb.id" .
 
 **Output yang BENAR:**
 ```bash
-$ grep -r "indotechapi.api.digiprosb.id" main.js
-http://indotechapi.api.digiprosb.id/api
+$ grep -r "indotech.api.digiprosb.id" main.js
+http://indotech.api.digiprosb.id/api
 ```
 
 **Output yang SALAH:**
@@ -234,7 +234,7 @@ Buka aplikasi production dan buka Developer Tools (F12) → Network
 
 Request seharusnya ke:
 ```
-http://indotechapi.api.digiprosb.id/api/auth/login
+http://indotech.api.digiprosb.id/api/auth/login
 ```
 
 BUKAN:
@@ -269,7 +269,7 @@ server {
 
     # Proxy ke backend (jika butuh)
     location /api {
-        proxy_pass http://indotechapi.api.digiprosb.id;
+        proxy_pass http://indotech.api.digiprosb.id;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -349,7 +349,7 @@ npm run build:prod --verbose
 |------|-------------|------------|
 | Environment File | `.env` | `.env.production` |
 | Build Command | `npm start` | `npm run build:prod` |
-| API URL | `http://localhost:3000/api` | `http://indotechapi.api.digiprosb.id/api` |
+| API URL | `http://localhost:3000/api` | `http://indotech.api.digiprosb.id/api` |
 | Build Location | Local / VPS | **VPS (PENTING!)** |
 | Push to Git | Code + .env | Code + .env.production |
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
+import apiClient from '../utils/api';
 import Swal from 'sweetalert2';
 
 const Login = () => {
@@ -53,19 +54,11 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call backend API
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
+      // Call backend API using apiClient
+      const data = await apiClient.login({
+        username: formData.username,
+        password: formData.password
       });
-
-      const data = await response.json();
 
       if (data.success) {
         // Store tokens

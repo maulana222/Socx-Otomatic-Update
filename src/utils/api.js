@@ -1,9 +1,19 @@
 // API utility for handling backend communication
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Validate that API URL is set
+if (!API_BASE_URL) {
+  throw new Error(
+    'REACT_APP_BACKEND_URL is not set! Please check your .env or .env.production file.\n' +
+    'Development: Check frontend/.env\n' +
+    'Production: Check frontend/.env.production'
+  );
+}
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
+    console.log('🔗 API Base URL:', this.baseURL);
   }
 
   // Get authorization header
