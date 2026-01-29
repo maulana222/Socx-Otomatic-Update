@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
-import axios from 'axios';
+import socxApi from '../utils/socxApi';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 
@@ -29,8 +29,7 @@ const TriProduksi = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [inputMode, setInputMode] = useState('nomor'); // 'nomor' atau 'excel'
 
-  // Konfigurasi API
-  const apiUrl = 'https://indotechapi.socx.app/api/v1/suppliers_modules/task';
+  // API akan menggunakan socxApi untuk semua request
 
   // Data statis Tri Rita berdasarkan response (harga dalam Rupiah)
   const triRitaStaticDataRaw = [
@@ -71,29 +70,45 @@ const TriProduksi = () => {
 
   const fetchPaket = async (msisdn) => {
     try {
-      const response = await axios.post(
-        apiUrl,
+      const response = await socxApi.socxPost(
+        '/api/v1/suppliers_modules/task',
         {
           id: 57,
           name: 'rita',
           task: 'special_offer',
           payload: { msisdn }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json',
-            Origin: 'https://indotech.socx.app',
-            Referer: 'https://indotech.socx.app/'
-          }
         }
       );
 
-      // Response.data langsung array, bukan response.data.list
-      const list = response.data?.data || [];
+      // Response dari API Tri Rita: { status: true, message: "Success", code: 1, data: [...] }
+      // Response dari backend proxy langsung mengembalikan data dari SOCX API
+      console.log('Response dari API Tri Rita:', response);
+      console.log('Response.data:', response.data);
+      
+      // Coba berbagai cara untuk mengambil data
+      let list = [];
+      
+      // Coba 1: response.data.data (structure: { status, message, code, data: [...] })
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        list = response.data.data;
+        console.log('Mengambil dari response.data.data:', list);
+      }
+      // Coba 2: response.data (jika backend langsung mengembalikan array)
+      else if (response.data && Array.isArray(response.data)) {
+        list = response.data;
+        console.log('Mengambil dari response.data:', list);
+      }
+      // Coba 3: response.data.data.data (nested structure)
+      else if (response.data && response.data.data && response.data.data.data && Array.isArray(response.data.data.data)) {
+        list = response.data.data.data;
+        console.log('Mengambil dari response.data.data.data:', list);
+      }
+      
+      console.log('Final list paket:', list, 'Length:', list.length);
       return list;
     } catch (error) {
       console.error(`❌ Gagal fetch nomor ${msisdn}:`, error.message);
+      console.error('Error details:', error);
       return [];
     }
   };

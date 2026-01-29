@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
-import axios from 'axios';
+import socxApi from '../utils/socxApi';
 import Swal from 'sweetalert2';
 
 const PulsaTransferUpdate = () => {
@@ -260,41 +260,23 @@ const PulsaTransferUpdate = () => {
     }
   }), []);
 
-  // useEffect dipindah ke bawah setelah deklarasi useCallback agar lolos lint no-use-before-define
-
   const fetchSuppliersByProvider = useCallback(async () => {
     setIsLoadingSuppliers(true);
     try {
       // Fetch all suppliers first
-      const suppliersResponse = await axios.get(
-        'https://indotechapi.socx.app/api/v1/suppliers',
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const suppliersResponse = await socxApi.socxGet('/api/v1/suppliers');
 
-      // Get the correct endpoint for the selected provider
+      // Get correct endpoint for selected provider
       const providerData = providers.find(p => p.id === selectedProvider);
       const endpoint = providerData ? providerData.endpoint : selectedProvider;
       
-      // Fetch products for the selected provider
-      const productsResponse = await axios.get(
-        `https://indotechapi.socx.app/api/v1/products/filter/1/${endpoint}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Fetch products for selected provider
+      const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/1/${endpoint}`);
 
       // Filter products that contain "TRANSFER"
-      const transferProducts = productsResponse.data.filter(product => 
+      const transferProducts = Array.isArray(productsResponse) ? productsResponse.filter(product => 
         product.name.toLowerCase().includes('transfer')
-      );
+      ) : [];
 
       // Store transfer products for later use (contains products_id for price update)
       setTransferProducts(transferProducts);
@@ -307,17 +289,9 @@ const PulsaTransferUpdate = () => {
       // Batch fetch suppliers for all products to reduce OPTIONS requests
       const supplierPromises = transferProducts.map(async (product) => {
         try {
-          const productSuppliersResponse = await axios.get(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          const productSuppliersResponse = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
           
-          return productSuppliersResponse.data;
+          return productSuppliersResponse || [];
         } catch (error) {
           console.error(`Error fetching suppliers for product ${product.id}:`, error);
           return null;
@@ -350,13 +324,13 @@ const PulsaTransferUpdate = () => {
       });
 
       // Filter suppliers that have transfer products for this provider
-      const filteredSuppliers = suppliersResponse.data.filter(supplier => 
+      const filteredSuppliers = Array.isArray(suppliersResponse) ? suppliersResponse.filter(supplier => 
         supplierNames.has(supplier.name)
-      );
+      ) : [];
 
       console.log('Transfer Products:', transferProducts);
       console.log('Supplier Names from products:', Array.from(supplierNames));
-      console.log('All Suppliers:', suppliersResponse.data);
+      console.log('All Suppliers:', suppliersResponse);
       console.log('Filtered Suppliers:', filteredSuppliers);
       console.log('Our Product Codes Data:', ourProductCodesData);
       console.log('Available Transfer Rates:', transferRates);
@@ -382,7 +356,7 @@ const PulsaTransferUpdate = () => {
     } finally {
       setIsLoadingSuppliers(false);
     }
-  }, [bearerToken, providers, selectedProvider, transferRates]);
+  }, [providers, selectedProvider, transferRates]);
 
   const fetchSupplierProducts = useCallback(async () => {
     if (!selectedSupplier) return;
@@ -392,31 +366,23 @@ const PulsaTransferUpdate = () => {
       // Step 1: Get suppliers_products_id and product_code from products_has_suppliers_modules
       const supplierModulePromises = transferProducts.map(async (product) => {
         try {
-          const response = await axios.get(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          const response = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
           
-          // Find the selected supplier in the response
+          // Find selected supplier in response
           const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
           const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
           
           console.log(`Processing product ${product.id}, looking for supplier: ${selectedSupplierName}`);
           
           // Check if response data exists and is an array
-          if (!response.data || !Array.isArray(response.data)) {
-            console.warn(`No supplier module data found for product ${product.id}`, response.data);
+          if (!Array.isArray(response)) {
+            console.warn(`No supplier module data found for product ${product.id}`, response);
             return null;
           }
           
-          console.log(`Found ${response.data.length} supplier modules for product ${product.id}`);
+          console.log(`Found ${response.length} supplier modules for product ${product.id}`);
           
-          const supplierModule = response.data.find(sm => sm.supplier === selectedSupplierName);
+          const supplierModule = response.find(sm => sm.supplier === selectedSupplierName);
           
           if (supplierModule) {
             return {
@@ -447,23 +413,15 @@ const PulsaTransferUpdate = () => {
       console.log('Product codes to filter:', productCodes);
       
       // Step 3: Fetch all supplier products and filter by product codes
-      const supplierProductsResponse = await axios.get(
-        `https://indotechapi.socx.app/api/v1/suppliers_products/list/${selectedSupplier}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const supplierProductsResponse = await socxApi.socxGet(`/api/v1/suppliers_products/list/${selectedSupplier}`);
       
       // Filter products by product codes (without numbers)
-      const filteredProducts = supplierProductsResponse.data.filter(product => {
+      const filteredProducts = Array.isArray(supplierProductsResponse) ? supplierProductsResponse.filter(product => {
         const productCodeBase = product.code.replace(/\d+/g, '');
         return productCodes.includes(productCodeBase);
-      });
+      }) : [];
       
-      console.log('All supplier products:', supplierProductsResponse.data);
+      console.log('All supplier products:', supplierProductsResponse);
       console.log('Filtered products by code:', filteredProducts);
       
       setSupplierProducts(filteredProducts);
@@ -473,7 +431,7 @@ const PulsaTransferUpdate = () => {
     } finally {
       setIsLoadingProducts(false);
     }
-  }, [selectedSupplier, bearerToken, transferProducts, allSuppliers]);
+  }, [selectedSupplier, transferProducts, allSuppliers]);
 
   // Fetch suppliers when provider is selected
   useEffect(() => {
@@ -580,22 +538,12 @@ const PulsaTransferUpdate = () => {
     return null;
   };
 
-  // calculateMargin dihapus karena tidak dipakai (menghindari no-unused-vars)
-
   const updateSupplierStatus = async (productsId, selectedSupplierName, token) => {
     try {
       // 1. Get all suppliers for this product
-      const response = await axios.get(
-        `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${productsId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${productsId}`);
 
-      const allSuppliers = response.data;
+      const allSuppliers = Array.isArray(response) ? response : [];
       const statusResults = [];
 
       console.log('All suppliers for product:', allSuppliers);
@@ -610,8 +558,8 @@ const PulsaTransferUpdate = () => {
           
           console.log(`Supplier: ${supplier.supplier}, Selected: ${selectedSupplierName}, New Status: ${newStatus}`);
           
-          const updateResponse = await axios.patch(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/${supplier.id}`,
+          const updateResponse = await socxApi.socxPatch(
+            `/api/v1/products_has_suppliers_modules/${supplier.id}`,
             {
               id: supplier.id,
               products_id: supplier.products_id,
@@ -621,12 +569,6 @@ const PulsaTransferUpdate = () => {
               priority: supplier.priority,
               pending_limit: supplier.pending_limit,
               suppliers_modules_id: supplier.suppliers_modules_id
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
             }
           );
 
@@ -665,19 +607,11 @@ const PulsaTransferUpdate = () => {
   // Function to fetch resellers group pricing and get Level 1 ID
   const fetchResellersGroupPricing = async (tipProduk, token) => {
     try {
-      const response = await axios.get(
-        `https://indotechapi.socx.app/api/v1/resellers_group/pricing/${tipProduk}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await socxApi.socxGet(`/api/v1/resellers_group/pricing/${tipProduk}`);
 
-      if (response.data && Array.isArray(response.data)) {
+      if (Array.isArray(response)) {
         // Find Level 1 reseller group
-        const level1Group = response.data.find(group => group.name === 'Level 1');
+        const level1Group = response.find(group => group.name === 'Level 1');
         return level1Group ? level1Group.id : null;
       }
       return null;
@@ -690,19 +624,13 @@ const PulsaTransferUpdate = () => {
   // Function to update markup for Level 1 reseller group
   const updateMarkup = async (resellerGroupId, newMarkup, token) => {
     try {
-      const response = await axios.post(
-        'https://indotechapi.socx.app/api/v1/resellers_group_has_products/update_markup',
+      const response = await socxApi.socxPost(
+        '/api/v1/resellers_group_has_products/update_markup',
         {
           id: resellerGroupId,
           markup: newMarkup,
           commissions: 0,
           points: 0
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
         }
       );
       return { success: true, response: response.data };
@@ -748,8 +676,6 @@ const PulsaTransferUpdate = () => {
     setShowResults(false);
 
     try {
-      // Hitung margin (jika diperlukan untuk preview UI), tidak digunakan langsung di proses update
-      // const { margin, marginPercent } = calculateMargin();
       const updateResults = [];
 
       // Batch update semua produk transfer dari supplier to reduce OPTIONS requests
@@ -790,7 +716,7 @@ const PulsaTransferUpdate = () => {
           // Calculate new sell price based on sell pot
           const newSellPrice = Math.round(calculateHargaJual(adminFee, parseFloat(sellPot)));
 
-          // Find the corresponding transfer product to get the correct products_id
+          // Find corresponding transfer product to get the correct products_id
           const correspondingTransferProduct = transferProducts.find(tp => {
             const tpDenom = extractDenomFromProductName(tp.name);
             const productDenom = extractDenomFromProductName(product.name);
@@ -806,7 +732,7 @@ const PulsaTransferUpdate = () => {
             };
           }
 
-          // Get selected supplier name from the supplier list
+          // Get selected supplier name from supplier list
           const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
           const selectedSupplierName = selectedSupplierData ? selectedSupplierData.name : null;
 
@@ -823,8 +749,8 @@ const PulsaTransferUpdate = () => {
           // Execute all updates in parallel
           const [supplierProductResponse, productPriceResponse, supplierStatusResults, markupResult] = await Promise.all([
             // 1. Update supplier product (base_price) using PATCH
-            axios.patch(
-              `https://indotechapi.socx.app/api/v1/suppliers_products/${product.id}`,
+            socxApi.socxPatch(
+              `/api/v1/suppliers_products/${product.id}`,
               {
                 id: product.id,
                 suppliers_id: selectedSupplier,
@@ -836,26 +762,14 @@ const PulsaTransferUpdate = () => {
                 trx_per_day: product.trx_per_day,
                 regex_custom_info: product.regex_custom_info || '',
                 updated_time: Math.floor(Date.now() / 1000)
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${bearerToken}`,
-                  'Content-Type': 'application/json'
-                }
               }
             ),
             // 2. Update product price (harga modal) using POST
-            axios.post(
-              'https://indotechapi.socx.app/api/v1/products/update_price',
+            socxApi.socxPost(
+              '/api/v1/products/update_price',
               {
                 id: correspondingTransferProduct.id,
                 price: newBasePrice // Gunakan harga modal, bukan harga jual
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${bearerToken}`,
-                  'Content-Type': 'application/json'
-                }
               }
             ),
             // 3. Update supplier status
@@ -960,7 +874,7 @@ const PulsaTransferUpdate = () => {
                 Bearer Token Required
               </h3>
               <p className="text-sm text-red-700 mt-1">
-                Please set your Bearer Token in the header to use this feature.
+                Please set your Bearer Token in header to use this feature.
               </p>
             </div>
           </div>
@@ -1468,4 +1382,3 @@ const PulsaTransferUpdate = () => {
 };
 
 export default PulsaTransferUpdate;
-

@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
+import apiClient from '../utils/api';
 import Swal from 'sweetalert2';
 
 const Header = () => {
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [socxTokenStatus, setSocxTokenStatus] = useState({
+    isValid: false,
+    hasToken: false,
+    message: 'Checking...',
+    loading: true
+  });
   const { bearerToken, clearBearerToken } = useBearerToken();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Load user data from localStorage
   useEffect(() => {
@@ -25,6 +33,50 @@ const Header = () => {
       setUser(null);
     }
   }, [bearerToken]);
+
+  // Validate SOCX token on page load and route change
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!bearerToken || !user) {
+        setSocxTokenStatus({
+          isValid: false,
+          hasToken: false,
+          message: 'Not logged in',
+          loading: false
+        });
+        return;
+      }
+
+      setSocxTokenStatus({
+        isValid: false,
+        hasToken: false,
+        message: 'Validating...',
+        loading: true
+      });
+
+      try {
+        const response = await apiClient.request('/socx/settings/validate-token');
+        
+        if (response.success) {
+          setSocxTokenStatus({
+            isValid: response.data.isValid,
+            hasToken: response.data.hasToken,
+            message: response.data.message,
+            loading: false
+          });
+        }
+      } catch (error) {
+        setSocxTokenStatus({
+          isValid: false,
+          hasToken: false,
+          message: 'Validation failed',
+          loading: false
+        });
+      }
+    };
+
+    validateToken();
+  }, [bearerToken, user, location.pathname]);
 
   const handleLogout = () => {
     Swal.fire({
@@ -56,8 +108,6 @@ const Header = () => {
     });
   };
 
-  
-
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="container mx-auto px-4">
@@ -69,93 +119,156 @@ const Header = () => {
             </h1>
           </div>
 
-          {/* Navigation removed as requested */}
-          <div></div>
+          {/* Navigation Tabs */}
+          {bearerToken && user && (
+            <nav className="flex items-center space-x-1">
+              {/* Dashboard Tab */}
+              <button
+                onClick={() => navigate('/')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  location.pathname === '/' 
+                    ? 'bg-indigo-50 text-indigo-600' 
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
+              >
+                Dashboard
+              </button>
 
-          {/* User Menu Section */}
+              {/* Tools Tab */}
+              <button
+                onClick={() => navigate('/tools')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  location.pathname === '/tools' 
+                    ? 'bg-indigo-50 text-indigo-600' 
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
+              >
+                Tools
+              </button>
+            </nav>
+          )}
+
+          {/* Right Section: SOCX Token Status and User Menu */}
           <div className="flex items-center space-x-4">
-            {bearerToken && user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
-                >
-                  <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
-                    {user.firstName?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <span className="text-gray-700">
-                    {user.firstName} {user.lastName}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {/* User Dropdown Menu */}
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                      <p className="text-xs text-gray-500 capitalize">Role: {user.role}</p>
-                    </div>
+            {/* SOCX Token Status - Only show when logged in */}
+            {bearerToken && user && (
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50">
+                {socxTokenStatus.loading ? (
+                  <span className="text-xs text-gray-600">Checking...</span>
+                ) : socxTokenStatus.isValid ? (
+                  <>
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span className="text-xs text-green-700 font-medium">SOCX Token Valid</span>
+                  </>
+                ) : socxTokenStatus.hasToken ? (
+                  <>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <button
-                      onClick={() => {
-                        navigate('/profile');
-                        setShowUserMenu(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      onClick={() => navigate('/settings')}
+                      className="text-xs text-red-700 font-medium hover:underline"
                     >
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Profile
-                      </div>
+                      Token Expired
                     </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
                     <button
-                      onClick={() => {
-                        navigate('/socx-token');
-                        setShowUserMenu(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      onClick={() => navigate('/settings')}
+                      className="text-xs text-gray-700 font-medium hover:underline"
                     >
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                        </svg>
-                        Socx Token
-                      </div>
+                      Set Token
                     </button>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Logout
-                      </div>
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                Login
-              </button>
             )}
+
+            {/* User Menu Section */}
+            <div>
+              {bearerToken && user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center space-x-2 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+                      {user.firstName?.charAt(0)?.toUpperCase() || user.username?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    <span className="text-gray-700">
+                      {user.firstName} {user.lastName}
+                    </span>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* User Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <p className="text-xs text-gray-500 capitalize">Role: {user.role}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigate('/profile');
+                          setShowUserMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Profile
+                        </div>
+                      </button>
+                      <button
+                      onClick={() => {
+                        navigate('/settings');
+                        setShowUserMenu(false);
+                      }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                          Settings
+                        </div>
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Logout
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                    <button
+                      onClick={() => navigate('/settings')}
+                      className="text-xs text-gray-700 font-medium hover:underline"
+                    >
+                      Set Token
+                    </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Click outside to close menu */}
+      {/* Click outside to close user menu */}
       {showUserMenu && (
         <div
           className="fixed inset-0 z-0"

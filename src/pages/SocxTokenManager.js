@@ -42,7 +42,9 @@ const SocxTokenManager = () => {
     try {
       const response = await apiClient.request('/socx/token', {
         method: 'POST',
-        body: JSON.stringify(tokenData)
+        body: JSON.stringify({
+          token: tokenData.apiToken
+        })
       });
 
       if (response.success) {
@@ -194,31 +196,11 @@ const SocxTokenManager = () => {
                 </svg>
                 <span className="font-medium text-green-800">Token Aktif</span>
               </div>
-              {!currentToken.token?.isValid && (
-                <p className="text-red-600 text-sm mt-2">Token sudah kedaluwarsa</p>
-              )}
-              {currentToken.token?.isExpiringSoon && (
-                <p className="text-yellow-600 text-sm mt-2">Token akan segera kedaluwarsa</p>
-              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-md p-4">
-                <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
-                <div className={`font-medium ${currentToken.token.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                  {currentToken.token.isActive ? 'Aktif' : 'Tidak Aktif'}
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-md p-4">
-                <div className="text-sm font-medium text-gray-500 mb-1">Berlaku Hingga</div>
-                <div className="text-gray-900">{formatDate(currentToken.token.expiresAt)}</div>
-              </div>
-
-              <div className="bg-gray-50 rounded-md p-4">
-                <div className="text-sm font-medium text-gray-500 mb-1">Terakhir Update</div>
-                <div className="text-gray-900">{formatDate(currentToken.token.updatedAt)}</div>
-              </div>
+            <div className="bg-gray-50 rounded-md p-4">
+              <div className="text-sm font-medium text-gray-500 mb-1">Terakhir Update</div>
+              <div className="text-gray-900">{formatDate(currentToken.token?.updatedAt)}</div>
             </div>
 
             <div className="flex gap-4">

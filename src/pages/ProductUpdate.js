@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import * as XLSX from 'xlsx';
-import axios from 'axios';
+import socxApi from '../utils/socxApi';
 
 const ProductUpdate = () => {
   const { bearerToken } = useBearerToken();
@@ -151,22 +151,13 @@ const ProductUpdate = () => {
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
       try {
-        const response = await axios.post(
-          'https://indotechapi.socx.app/api/v1/suppliers_products',
-          item,
-          {
-            headers: {
-              'Authorization': `Bearer ${bearerToken}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const response = await socxApi.socxPost('/api/v1/suppliers_products', item);
 
         results.push({
           row: i + 1,
           status: 'success',
           data: item,
-          response: response.data
+          response: response
         });
       } catch (error) {
         results.push({

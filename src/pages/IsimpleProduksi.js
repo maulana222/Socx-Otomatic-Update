@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
-import axios from 'axios';
+import socxApi from '../utils/socxApi';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 
@@ -27,12 +27,8 @@ const IsimpleProduksi = () => {
   const [searchPaket, setSearchPaket] = useState('');
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [inputMode, setInputMode] = useState('nomor'); // 'nomor' atau 'excel'
+  const [inputMode, setInputMode] = useState('nomor'); 
 
-  // Konfigurasi API
-  const apiUrl = 'https://indotechapi.socx.app/api/v1/suppliers_modules/task';
-
-  // Data statis Indosat Freedom Internet (tanpa duplikat) - harga dalam Rupiah
   const indosatStaticDataRaw = [
     { name: "Indosat Freedom Internet 1.5 GB 1 Hari", price: 4375 },
     { name: "Indosat Freedom Internet 1 GB 2 Hari", price: 5650 },
@@ -91,28 +87,48 @@ const IsimpleProduksi = () => {
 
   const fetchPaket = async (msisdn) => {
     try {
-      const response = await axios.post(
-        apiUrl,
+      const response = await socxApi.socxPost(
+        '/api/v1/suppliers_modules/task',
         {
           id: 40,
           name: 'isimple',
           task: 'hot_promo',
           payload: { msisdn }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json',
-            Origin: 'https://indotech.socx.app',
-            Referer: 'https://indotech.socx.app/'
-          }
         }
       );
 
-      const list = response.data?.data?.list || [];
+      console.log('Response dari API Isimple:', response);
+      console.log('Response.data:', response.data);
+      
+      // Response Isimple: { count, data: { list: [...] } }
+      let list = [];
+      
+      // Coba 1: response.data.data.list (structure Isimple)
+      if (response.data && response.data.data && response.data.data.list && Array.isArray(response.data.data.list)) {
+        list = response.data.data.list;
+        console.log('Mengambil dari response.data.data.list:', list);
+      }
+      // Coba 2: response.data.list (jika berbeda)
+      else if (response.data && response.data.list && Array.isArray(response.data.list)) {
+        list = response.data.list;
+        console.log('Mengambil dari response.data.list:', list);
+      }
+      // Coba 3: response.data (jika langsung array)
+      else if (response.data && Array.isArray(response.data)) {
+        list = response.data;
+        console.log('Mengambil dari response.data:', list);
+      }
+      // Coba 4: response.data.data (jika data langsung)
+      else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        list = response.data.data;
+        console.log('Mengambil dari response.data.data:', list);
+      }
+      
+      console.log('Final list paket Isimple:', list, 'Length:', list.length);
       return list;
     } catch (error) {
       console.error(`❌ Gagal fetch nomor ${msisdn}:`, error.message);
+      console.error('Error details:', error);
       return [];
     }
   };

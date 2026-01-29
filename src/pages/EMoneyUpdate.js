@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { useBearerToken } from '../contexts/BearerTokenContext';
+import socxApi from '../utils/socxApi';
 
 const PROVIDERS = [
   {
@@ -72,55 +72,175 @@ const EMoneyUpdate = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!selectedProvider || !selectedProvider.providerId || !bearerToken) return;
+      console.log('📦 FetchProducts dipanggil');
+      console.log('selectedProvider:', selectedProvider);
+      console.log('bearerToken:', !!bearerToken);
+      
+      if (!selectedProvider || !selectedProvider.providerId || !bearerToken) {
+        console.log('❌ Tidak fetch karena kondisi tidak terpenuhi');
+        return;
+      }
+      
       setIsLoading(true);
       setIsLoadingSuppliers(true);
       setSelectedSupplier('');
       setSupplierProducts([]);
       setResults([]);
       setShowResults(false);
+      
       try {
-        const url = `https://indotechapi.socx.app/api/v1/products/filter/${selectedProvider.categoryId}/${selectedProvider.providerId}`;
-        const resp = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        // Keep only active products if status === 1
-        const list = Array.isArray(resp.data) ? resp.data.filter((p) => p.status !== 0) : [];
-        setProducts(list);
-
-        // Fetch suppliers relevant to these products (like Pulsa Transfer)
-        // 1) get all suppliers
-        const suppliersResponse = await axios.get(
-          'https://indotechapi.socx.app/api/v1/suppliers',
-          { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-        );
-
-        // 2) collect supplier names that appear in products_has_suppliers_modules for these products
-        const supplierNames = new Set();
-        const mapping = new Map();
-        const supplierPromises = list.map(async (product) => {
-          try {
-            const res = await axios.get(
-              `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-              { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-            );
-            const arr = Array.isArray(res.data) ? res.data : [];
-            arr.forEach((s) => {
-              if (s.supplier) {
-                supplierNames.add(s.supplier);
-                mapping.set(s.supplier, s.suppliers_modules_id);
+        const endpoint = `/api/v1/products/filter/${selectedProvider.categoryId}/${selectedProvider.providerId}`;
+        console.log('📡 Memanggil API:', endpoint);
+        
+        const resp = await socxApi.socxGet(endpoint);
+        
+        console.log('✅ Response dari API Filter Products:', resp);
+        console.log('📄 Response.data:', resp.data);
+        console.log('📄 Response.data type:', typeof resp.data);
+        console.log('📄 Array.isArray(resp.data):', Array.isArray(resp.data));
+        
+        // Coba berbagai cara untuk mengambil data
+        let list = [];
+        
+        // Coba 1: resp.data adalah array langsung
+        if (Array.isArray(resp.data)) {
+          list = resp.data;
+          console.log('✅ Mengambil dari resp.data (array langsung):', list.length);
+        }
+        // Coba 2: resp.data.data adalah array
+        else if (resp.data && resp.data.data && Array.isArray(resp.data.data)) {
+          list = resp.data.data;
+          console.log('✅ Mengambil dari resp.data.data:', list.length);
+        }
+        // Coba 3: resp.data.list adalah array
+        else if (resp.data && resp.data.list && Array.isArray(resp.data.list)) {
+          list = resp.data.list;
+          console.log('✅ Mengambil dari resp.data.list:', list.length);
+        }
+        // Coba 4: resp.data.products adalah array
+        else if (resp.data && resp.data.products && Array.isArray(resp.data.products)) {
+          list = resp.data.products;
+          console.log('✅ Mengambil dari resp.data.products:', list.length);
+        }
+        else {
+          console.warn('⚠️ Tidak menemukan array di response, mencoba cara lain...');
+          // Coba semua property yang mungkin berisi array
+          if (resp.data && typeof resp.data === 'object') {
+            for (const key in resp.data) {
+              if (Array.isArray(resp.data[key])) {
+                list = resp.data[key];
+                console.log(`✅ Mengambil dari resp.data.${key}:`, list.length);
+                break;
               }
-            });
-          } catch (_) { /* ignore */ }
-        });
+            }
+          }
+        }
+        
+        console.log('📊 Total products sebelum filter:', list.length);
+        
+        if (list.length > 0) {
+          console.log('📄 Sample first product:', list[0]);
+          console.log('📄 Status first product:', list[0].status);
+        }
+        
+        // Filter products yang active (status !== 0 dan status !== false)
+        // TAPI juga tampilkan semua products jika semuanya tidak active
+        let filteredList = [];
+        if (list.length > 0) {
+          filteredList = list.filter((p) => {
+            // Cek berbagai kemungkinan field status
+            const status = p.status;
+            const isActive = status !== 0 && status !== false && status !== '0';
+            return isActive;
+          });
+          
+          console.log('📊 Active products (setelah filter status):', filteredList.length);
+          
+          // Jika semua products tidak active, tampilkan semua products
+          if (filteredList.length === 0) {
+            console.warn('⚠️ Semua products tidak active, menampilkan semua products');
+            filteredList = list;
+          }
+        }
+        
+        console.log('📊 Final products yang akan diset:', filteredList.length);
+        console.log('📄 Set products state');
+        
+        setProducts(filteredList);
 
-        await Promise.all(supplierPromises);
-        const filteredSuppliers = suppliersResponse.data.filter((s) => supplierNames.has(s.name));
-        setAllSuppliers(filteredSuppliers);
+        // Fetch ALL active suppliers (tidak perlu filter berdasarkan products)
+        console.log('🏪 Mulai fetch suppliers...');
+        
+        // Get all suppliers
+        const suppliersResponse = await socxApi.socxGet('/api/v1/suppliers');
+        console.log('📄 All suppliers response:', suppliersResponse);
+        console.log('📄 All suppliers.data:', suppliersResponse.data);
+        console.log('📄 Type of suppliersResponse.data:', typeof suppliersResponse.data);
+        console.log('📄 Array.isArray(suppliersResponse.data):', Array.isArray(suppliersResponse.data));
+        
+        // Coba berbagai cara untuk mengambil data suppliers
+        let suppliersList = [];
+        
+        // Coba 1: suppliersResponse.data adalah array langsung
+        if (Array.isArray(suppliersResponse.data)) {
+          suppliersList = suppliersResponse.data;
+          console.log('✅ Mengambil dari suppliersResponse.data (array langsung):', suppliersList.length);
+        }
+        // Coba 2: suppliersResponse.data.suppliers adalah array
+        else if (suppliersResponse.data && suppliersResponse.data.suppliers && Array.isArray(suppliersResponse.data.suppliers)) {
+          suppliersList = suppliersResponse.data.suppliers;
+          console.log('✅ Mengambil dari suppliersResponse.data.suppliers:', suppliersList.length);
+        }
+        // Coba 3: suppliersResponse.data.list adalah array
+        else if (suppliersResponse.data && suppliersResponse.data.list && Array.isArray(suppliersResponse.data.list)) {
+          suppliersList = suppliersResponse.data.list;
+          console.log('✅ Mengambil dari suppliersResponse.data.list:', suppliersList.length);
+        }
+        // Coba 4: suppliersResponse.data.items adalah array
+        else if (suppliersResponse.data && suppliersResponse.data.items && Array.isArray(suppliersResponse.data.items)) {
+          suppliersList = suppliersResponse.data.items;
+          console.log('✅ Mengambil dari suppliersResponse.data.items:', suppliersList.length);
+        }
+        else {
+          console.warn('⚠️ Tidak menemukan array di suppliersResponse.data, mencari property lain...');
+          // Coba semua property yang mungkin berisi array
+          if (suppliersResponse.data && typeof suppliersResponse.data === 'object') {
+            for (const key in suppliersResponse.data) {
+              if (Array.isArray(suppliersResponse.data[key])) {
+                suppliersList = suppliersResponse.data[key];
+                console.log(`✅ Mengambil dari suppliersResponse.data.${key}:`, suppliersList.length);
+                break;
+              }
+            }
+          }
+        }
+        
+        console.log('📊 Total suppliers sebelum filter:', suppliersList.length);
+        
+        if (!Array.isArray(suppliersList) || suppliersList.length === 0) {
+          console.error('❌ Error: suppliersList bukan array atau kosong');
+          console.error('❌ suppliersResponse:', suppliersResponse);
+          setAllSuppliers([]);
+          return;
+        }
+
+        // Filter suppliers yang active (status === 1)
+        const activeSuppliers = suppliersList.filter((s) => {
+          console.log(`📄 Cek supplier ${s.name}: status = ${s.status}`);
+          return s.status === 1;
+        });
+        
+        console.log('📊 Active suppliers (status === 1):', activeSuppliers.length);
+        console.log('📊 List active suppliers:', activeSuppliers);
+        
+        // Untuk e-money, tampilkan SEMUA active suppliers
+        // Tidak perlu filter berdasarkan products_has_suppliers_modules
+        console.log('📊 Setting allSuppliers dengan SEMUA active suppliers');
+        setAllSuppliers(activeSuppliers);
       } catch (e) {
+        console.error('❌ Error di fetchProducts (suppliers):', e);
+        console.error('❌ Error message:', e.message);
+        console.error('❌ Error stack:', e.stack);
         setProducts([]);
         setAllSuppliers([]);
         
@@ -145,10 +265,7 @@ const EMoneyUpdate = () => {
 
         const modulePromises = products.map(async (product) => {
           try {
-            const res = await axios.get(
-              `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${product.id}`,
-              { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-            );
+            const res = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
             const arr = Array.isArray(res.data) ? res.data : [];
             const mod = arr.find((sm) => sm.supplier === selectedSupplierName);
             if (mod) {
@@ -181,10 +298,7 @@ const EMoneyUpdate = () => {
           });
         });
 
-        const supplierProductsResponse = await axios.get(
-          `https://indotechapi.socx.app/api/v1/suppliers_products/list/${selectedSupplier}`,
-          { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-        );
+        const supplierProductsResponse = await socxApi.socxGet(`/api/v1/suppliers_products/list/${selectedSupplier}`);
 
         const filtered = supplierProductsResponse.data.filter((sp) => {
           const base = sp.code.replace(/\d+/g, '');
@@ -268,17 +382,9 @@ const EMoneyUpdate = () => {
   }, [modal, hargaJual, products, supplierProducts, selectedSupplier]);
 
   // Function to fetch resellers group pricing and get Level 1 ID
-  const fetchResellersGroupPricing = async (tipProduk, token) => {
+  const fetchResellersGroupPricing = async (tipProduk) => {
     try {
-      const response = await axios.get(
-        `https://indotechapi.socx.app/api/v1/resellers_group/pricing/${tipProduk}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await socxApi.socxGet(`/api/v1/resellers_group/pricing/${tipProduk}`);
 
       if (response.data && Array.isArray(response.data)) {
         // Find Level 1 reseller group
@@ -293,21 +399,15 @@ const EMoneyUpdate = () => {
   };
 
   // Function to update markup for Level 1 reseller group
-  const updateMarkup = async (resellerGroupId, newMarkup, token) => {
+  const updateMarkup = async (resellerGroupId, newMarkup) => {
     try {
-      const response = await axios.post(
-        'https://indotechapi.socx.app/api/v1/resellers_group_has_products/update_markup',
+      const response = await socxApi.socxPost(
+        '/api/v1/resellers_group_has_products/update_markup',
         {
           id: resellerGroupId,
           markup: newMarkup,
           commissions: 0,
           points: 0
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
         }
       );
       return { success: true, response: response.data };
@@ -319,16 +419,13 @@ const EMoneyUpdate = () => {
 
   const updateSupplierStatus = async (productId, selectedSupplierName) => {
     try {
-      const response = await axios.get(
-        `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/product/${productId}`,
-        { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-      );
+      const response = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${productId}`);
       const all = Array.isArray(response.data) ? response.data : [];
       const updatePromises = all.map(async (supplier) => {
         try {
           const newStatus = supplier.supplier === selectedSupplierName ? 1 : 0;
-          const updateResponse = await axios.patch(
-            `https://indotechapi.socx.app/api/v1/products_has_suppliers_modules/${supplier.id}`,
+          const updateResponse = await socxApi.socxPatch(
+            `/api/v1/products_has_suppliers_modules/${supplier.id}`,
             {
               id: supplier.id,
               products_id: supplier.products_id,
@@ -338,8 +435,7 @@ const EMoneyUpdate = () => {
               priority: supplier.priority,
               pending_limit: supplier.pending_limit,
               suppliers_modules_id: supplier.suppliers_modules_id
-            },
-            { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+            }
           );
           return { supplier_id: supplier.suppliers_modules_id, supplier_name: supplier.supplier, status: newStatus, response: updateResponse.data };
         } catch (error) {
@@ -382,21 +478,20 @@ const EMoneyUpdate = () => {
            const tipProduk = corresponding.tip_produk || corresponding.id;
            
            // Fetch resellers group pricing to get Level 1 ID
-           const level1ResellerGroupId = await fetchResellersGroupPricing(tipProduk, bearerToken);
+           const level1ResellerGroupId = await fetchResellersGroupPricing(tipProduk);
            
            // Calculate markup based on actual price difference (harga jual - harga modal)
            const actualMargin = item.newHargaJual - item.newModal;
            const markupPercentage = Math.round(actualMargin);
 
            const [priceResp, supplierStatusResults, markupResult] = await Promise.all([
-             axios.post(
-               'https://indotechapi.socx.app/api/v1/products/update_price',
-               { id: corresponding.id, price: item.newModal },
-               { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
+             socxApi.socxPost(
+               '/api/v1/products/update_price',
+               { id: corresponding.id, price: item.newModal }
              ),
              selectedSupplierName ? updateSupplierStatus(corresponding.id, selectedSupplierName) : Promise.resolve([]),
              // Update markup for Level 1 reseller group (if found)
-             level1ResellerGroupId ? updateMarkup(level1ResellerGroupId, markupPercentage, bearerToken) : Promise.resolve({ success: false, error: 'Level 1 reseller group not found' })
+             level1ResellerGroupId ? updateMarkup(level1ResellerGroupId, markupPercentage) : Promise.resolve({ success: false, error: 'Level 1 reseller group not found' })
            ]);
           return {
             status: 'success',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useBearerToken } from '../contexts/BearerTokenContext';
-import axios from 'axios';
+import socxApi from '../utils/socxApi';
 import Swal from 'sweetalert2';
 
 const FreeFireUpdate = () => {
@@ -58,8 +58,7 @@ const FreeFireUpdate = () => {
   // Konfigurasi
   const CONFIG = {
     CATEGORY_ID: 8,  // Game category
-    PROVIDER_ID: 8,  // Free Fire provider
-    API_BASE_URL: 'https://indotechapi.socx.app/api/v1'
+    PROVIDER_ID: 8   // Free Fire provider
   };
 
   // Hindari panggilan markup saat running di localhost (CORS di endpoint markup)
@@ -78,26 +77,10 @@ const FreeFireUpdate = () => {
     setIsLoadingSuppliers(true);
     try {
       // Fetch all suppliers first
-      const suppliersResponse = await axios.get(
-        `${CONFIG.API_BASE_URL}/suppliers`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const suppliersResponse = await socxApi.socxGet('/api/v1/suppliers');
 
       // Fetch Free Fire products
-      const productsResponse = await axios.get(
-        `${CONFIG.API_BASE_URL}/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
 
       // Filter produk GMFF dan FFP
       const gameProducts = productsResponse.data.filter(product => 
@@ -111,17 +94,9 @@ const FreeFireUpdate = () => {
       // Batch fetch suppliers for all products to reduce API calls
       const supplierPromises = gameProducts.map(async (product) => {
         try {
-          const productSuppliersResponse = await axios.get(
-            `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${product.id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${bearerToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          const productSuppliersResponse = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
 
-          const productSuppliers = productSuppliersResponse.data;
+          const productSuppliers = productSuppliersResponse;
           
           // Add supplier names and their modules_id to our mapping
           productSuppliers.forEach(supplier => {
@@ -158,7 +133,7 @@ const FreeFireUpdate = () => {
       setIsLoadingProducts(false);
       setIsLoadingSuppliers(false);
     }
-  }, [bearerToken, CONFIG.API_BASE_URL, CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
+  }, [CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
 
   const fetchSupplierProducts = useCallback(async () => {
     if (!selectedSupplier) return;
@@ -166,21 +141,12 @@ const FreeFireUpdate = () => {
     setIsLoadingProducts(true);
     try {
       // Fetch Free Fire products first
-      const productsResponse = await axios.get(
-        `${CONFIG.API_BASE_URL}/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
       
       // Filter produk GMFF dan FFP
       const gameProducts = productsResponse.data.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
       );
-
 
       // Get supplier modules for products
       const selectedSupplierData = allSuppliers.find(s => s.id === parseInt(selectedSupplier));
@@ -188,11 +154,8 @@ const FreeFireUpdate = () => {
 
       const modulePromises = gameProducts.map(async (product) => {
         try {
-          const res = await axios.get(
-            `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${product.id}`,
-            { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-          );
-          const arr = Array.isArray(res.data) ? res.data : [];
+          const res = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
+          const arr = Array.isArray(res) ? res : [];
           const mod = arr.find((sm) => sm.supplier === selectedSupplierName);
           if (mod) {
             return { 
@@ -222,12 +185,9 @@ const FreeFireUpdate = () => {
       });
 
       // Fetch supplier products
-      const supplierProductsResponse = await axios.get(
-        `${CONFIG.API_BASE_URL}/suppliers_products/list/${selectedSupplier}`,
-        { headers: { Authorization: `Bearer ${bearerToken}`, 'Content-Type': 'application/json' } }
-      );
+      const supplierProductsResponse = await socxApi.socxGet(`/api/v1/suppliers_products/list/${selectedSupplier}`);
 
-      const filtered = supplierProductsResponse.data.filter((sp) => {
+      const filtered = supplierProductsResponse.filter((sp) => {
         const base = sp.code.replace(/\d+/g, '');
         return baseCodes.includes(base);
       }).map(sp => {
@@ -251,7 +211,7 @@ const FreeFireUpdate = () => {
     } finally {
       setIsLoadingProducts(false);
     }
-  }, [selectedSupplier, bearerToken, allSuppliers, CONFIG.API_BASE_URL, CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
+  }, [selectedSupplier, allSuppliers, CONFIG.CATEGORY_ID, CONFIG.PROVIDER_ID]);
 
   // Fetch Free Fire products and suppliers
   useEffect(() => {
@@ -292,22 +252,13 @@ const FreeFireUpdate = () => {
     return null;
   };
 
-
   // Fungsi untuk mengambil reseller group pricing
   const fetchResellersGroupPricing = async (productId) => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_BASE_URL}/resellers_group/pricing/${productId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await socxApi.socxGet(`/api/v1/resellers_group/pricing/${productId}`);
       
       // Pastikan return array, bukan null atau undefined
-      return Array.isArray(response.data) ? response.data : [];
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       console.error(`Error fetching resellers group pricing:`, error);
       return [];
@@ -317,19 +268,13 @@ const FreeFireUpdate = () => {
   // Fungsi untuk mengupdate markup reseller group
   const updateMarkup = async (resellerGroupId, newMarkup, token) => {
     try {
-      const response = await axios.post(
-        `${CONFIG.API_BASE_URL}/resellers_group_has_products/update_markup`,
+      const response = await socxApi.socxPost(
+        '/api/v1/resellers_group_has_products/update_markup',
         {
           id: resellerGroupId,
           markup: newMarkup,
           commissions: 0,
           points: 0
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
         }
       );
       
@@ -342,25 +287,17 @@ const FreeFireUpdate = () => {
   // Fungsi untuk mengupdate supplier status
   const updateSupplierStatus = async (productId, selectedSupplierName, token) => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/product/${productId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${productId}`);
 
-      const allSuppliers = response.data;
+      const allSuppliers = response;
       const statusResults = [];
 
       const updatePromises = allSuppliers.map(async (supplier) => {
         try {
           const newStatus = supplier.supplier === selectedSupplierName ? 1 : 0;
           
-          const updateResponse = await axios.patch(
-            `${CONFIG.API_BASE_URL}/products_has_suppliers_modules/${supplier.id}`,
+          const updateResponse = await socxApi.socxPatch(
+            `/api/v1/products_has_suppliers_modules/${supplier.id}`,
             {
               id: supplier.id,
               products_id: supplier.products_id,
@@ -370,12 +307,6 @@ const FreeFireUpdate = () => {
               priority: supplier.priority,
               pending_limit: supplier.pending_limit,
               suppliers_modules_id: supplier.suppliers_modules_id
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
             }
           );
 
@@ -438,15 +369,7 @@ const FreeFireUpdate = () => {
 
     try {
       // 1. Fetch produk Free Fire langsung saat klik update
-      const productsResponse = await axios.get(
-        `${CONFIG.API_BASE_URL}/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bearerToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
 
       // Filter produk GMFF dan FFP
       const gameProducts = productsResponse.data.filter(product => 
@@ -530,8 +453,8 @@ const FreeFireUpdate = () => {
           // Gunakan Promise.allSettled agar jika satu gagal, yang lain tetap jalan
           const updatePromises = [
             // Update 1: Supplier product base_price (harga modal)
-            axios.patch(
-              `${CONFIG.API_BASE_URL}/suppliers_products/${product.id}`,
+            socxApi.socxPatch(
+              `/api/v1/suppliers_products/${product.id}`,
               {
                 id: product.id,
                 suppliers_id: selectedSupplier,
@@ -543,26 +466,14 @@ const FreeFireUpdate = () => {
                 trx_per_day: product.trx_per_day,
                 regex_custom_info: product.regex_custom_info || '',
                 updated_time: Math.floor(Date.now() / 1000)
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${bearerToken}`,
-                  'Content-Type': 'application/json'
-                }
               }
             ),
             // Update 2: Product price (harga jual)
-            axios.post(
-              `${CONFIG.API_BASE_URL}/products/update_price`,
+            socxApi.socxPost(
+              '/api/v1/products/update_price',
               {
                 id: correspondingGameProduct.id,
                 price: finalPrice // Harga jual
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${bearerToken}`,
-                  'Content-Type': 'application/json'
-                }
               }
             ),
             // Update 3: Supplier status

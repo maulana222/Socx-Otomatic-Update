@@ -5,13 +5,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
+import Tools from './pages/Tools';
 import ProductUpdate from './pages/ProductUpdate';
 import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
 import FreeFireUpdate from './pages/FreeFireUpdate';
 import EMoneyUpdate from './pages/EMoneyUpdate';
 import IsimpleProduksi from './pages/IsimpleProduksi';
 import TriProduksi from './pages/TriProduksi';
-import SocxTokenManager from './pages/SocxTokenManager';
+import SettingsManager from './pages/SettingsManager';
 import { BearerTokenProvider } from './contexts/BearerTokenContext';
 
 function App() {
@@ -32,6 +33,11 @@ function App() {
                   <Route path="/" element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/tools" element={
+                    <ProtectedRoute>
+                      <Tools />
                     </ProtectedRoute>
                   } />
                   <Route path="/product-update" element={
@@ -69,9 +75,9 @@ function App() {
                       <Profile />
                     </ProtectedRoute>
                   } />
-                  <Route path="/socx-token" element={
+                  <Route path="/settings" element={
                     <ProtectedRoute>
-                      <SocxTokenManager />
+                      <SettingsManager />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<Navigate to="/" replace />} />

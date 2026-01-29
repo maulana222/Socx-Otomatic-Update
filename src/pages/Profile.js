@@ -20,7 +20,7 @@ const Profile = () => {
     confirmPassword: ''
   });
 
-  const { bearerToken, clearBearerToken } = useBearerToken();
+  const { clearBearerToken } = useBearerToken();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -122,7 +122,7 @@ const Profile = () => {
     }
 
     // Password complexity validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/;
     if (!passwordRegex.test(passwordData.newPassword)) {
       Swal.fire({
         icon: 'warning',
