@@ -155,6 +155,58 @@ console.log('REACT_APP_ENV:', process.env.REACT_APP_ENV);
 
 ---
 
+## ⚠️ Mixed Content Error (HTTPS Frontend + HTTP Backend)
+
+### Symptom:
+```
+Mixed Content: The page at 'https://indotech.digiprosb.id/login' was loaded over HTTPS, 
+but requested an insecure resource 'http://indotech.api.digiprosb.id/api/auth/login'. 
+This request has been blocked; content must be served over HTTPS.
+
+TypeError: Failed to fetch
+```
+
+### Cause:
+- Frontend di-serve dengan **HTTPS** (port 443)
+- Backend URL menggunakan **HTTP** (port 80)
+- Browser memblokir request HTTP dari halaman HTTPS untuk keamanan
+
+### Solution:
+```bash
+# Di VPS
+cd /var/www/frontend
+
+# Update .env.production dengan HTTPS
+cat .env.production
+# REACT_APP_BACKEND_URL=https://indotech.api.digiprosb.id/api
+
+# Delete build lama
+rm -rf build/
+
+# Build production lagi
+npm run build:prod
+```
+
+### Verification:
+```bash
+# Cek bundle
+cd build/static/js
+grep -r "https://indotech.api.digiprosb.id" .
+# Harus ada hasil dengan https://
+
+# Test di browser
+# Buka https://indotech.digiprosb.id/login
+# Console: 🔗 API Base URL: https://indotech.api.digiprosb.id/api
+# Network tab: Request ke https://indotech.api.digiprosb.id/api/auth/login
+```
+
+**Important:**
+- ✅ Frontend HTTPS → Backend **HARUS** HTTPS
+- ✅ Frontend HTTP → Backend bisa HTTP atau HTTPS
+- ❌ Frontend HTTPS → Backend HTTP → **Mixed Content Error**
+
+---
+
 ## 🛠️ Troubleshooting Common Issues
 
 ### Issue 1: Masih localhost setelah build
@@ -273,7 +325,7 @@ REACT_APP_DEBUG=true
 
 ### Production (`.env.production`)
 ```env
-REACT_APP_BACKEND_URL=http://indotech.api.digiprosb.id/api
+REACT_APP_BACKEND_URL=https://indotech.api.digiprosb.id/api
 REACT_APP_ENV=production
 REACT_APP_DEBUG=false
 ```

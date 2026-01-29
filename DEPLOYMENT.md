@@ -109,7 +109,7 @@ REACT_APP_DEBUG=true
 
 ### `.env.production` (Production)
 ```env
-REACT_APP_BACKEND_URL=http://indotech.api.digiprosb.id/api
+REACT_APP_BACKEND_URL=https://indotech.api.digiprosb.id/api
 REACT_APP_ENV=production
 REACT_APP_DEBUG=false
 ```
@@ -349,7 +349,7 @@ npm run build:prod --verbose
 |------|-------------|------------|
 | Environment File | `.env` | `.env.production` |
 | Build Command | `npm start` | `npm run build:prod` |
-| API URL | `http://localhost:3000/api` | `http://indotech.api.digiprosb.id/api` |
+| API URL | `http://localhost:3000/api` | `https://indotech.api.digiprosb.id/api` |
 | Build Location | Local / VPS | **VPS (PENTING!)** |
 | Push to Git | Code + .env | Code + .env.production |
 
