@@ -33,6 +33,7 @@ const TriProduksi = () => {
 
   // Data statis Tri Rita berdasarkan response (harga dalam Rupiah)
   const triRitaStaticDataRaw = [
+    { name: "Tri Data Happy 2GB 1 Hari", price: 5000 },
     { name: "Tri Data Happy 5GB 2 Hari", price: 10000 },
     { name: "Tri Data Happy 12GB 3 Hari", price: 15000 },
     { name: "Tri Data Happy 10GB 5 Hari", price: 20000 },
@@ -41,14 +42,27 @@ const TriProduksi = () => {
     { name: "Tri Data Happy 9GB 7 Hari", price: 20000 },
     { name: "Tri Data Happy 10GB 7 Hari", price: 20000 },
     { name: "Tri Data Happy 18GB 7 Hari", price: 30000 },
-    { name: "Tri Data Happy 15GB 28 Hari", price: 50000 },
+    { name: "Tri Data Happy 3GB 14 Hari", price: 25000 },
     { name: "Tri Data Happy 35GB 14 Hari", price: 50000 },
-    { name: "Tri Data Happy 30GB 28 Hari", price: 80000 },
-    { name: "Tri Data Happy 100GB 30 Hari", price: 100000 },
+    { name: "Tri Data Happy 7GB 28 Hari", price: 28000 },
+    { name: "Tri Data Happy 9GB 28 Hari", price: 32000 },
+    { name: "Tri Data Happy 10GB 28 Hari", price: 31200 },
+    { name: "Tri Data Happy 11GB 28 Hari", price: 35000 },
+    { name: "Tri Data Happy 13GB 28 Hari", price: 41000 },
+    { name: "Tri Data Happy 14GB 28 Hari", price: 41000 },
+    { name: "Tri Data Happy 15GB 28 Hari", price: 45000 },
+    { name: "Tri Data Happy 18GB 28 Hari", price: 51000 },
+    { name: "Tri Data Happy 20GB 28 Hari", price: 52000 },
+    { name: "Tri Data Happy 25GB 28 Hari", price: 70000 },
+    { name: "Tri Data Happy 30GB 28 Hari", price: 75000 },
+    { name: "Tri Data Happy 42GB 28 Hari", price: 75000 },
+    { name: "Tri Data Happy 55GB 28 Hari", price: 10000 },
+    { name: "Tri Data Happy 100GB 28 Hari", price: 100000 },
     { name: "Tri Data Happy 150GB 30 Hari", price: 125000 },
     { name: "Tri Data Happy 7GB 5 Hari", price: 15000 },
     { name: "Tri Data Happy 60GB 30 Hari", price: 100000 },
     { name: "Tri Data Happy 75GB 30 Hari", price: 120000 },
+    { name: "Tri Data Happy 100GB 28 Hari", price: 150000 },
     { name: "Tri Data Happy 100GB (50GB Nasional + 50GB InternetTri) 30 Hari", price: 150000 }
   ];
 
