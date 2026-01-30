@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
+import Transactions from './pages/Transactions';
 import Tools from './pages/Tools';
 import ProductUpdate from './pages/ProductUpdate';
 import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
@@ -33,6 +34,11 @@ function App() {
                   <Route path="/" element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/transactions" element={
+                    <ProtectedRoute>
+                      <Transactions />
                     </ProtectedRoute>
                   } />
                   <Route path="/tools" element={

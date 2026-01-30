@@ -78,12 +78,29 @@ const FreeFireUpdate = () => {
     try {
       // Fetch all suppliers first
       const suppliersResponse = await socxApi.socxGet('/api/v1/suppliers');
+      
+      console.log('=== DEBUG: Suppliers API Response ===');
+      console.log('Raw suppliersResponse:', suppliersResponse);
+      console.log('suppliersResponse.data:', suppliersResponse.data);
+      console.log('Array.isArray(suppliersResponse):', Array.isArray(suppliersResponse));
+      console.log('Array.isArray(suppliersResponse.data):', Array.isArray(suppliersResponse?.data));
+      
+      // Handle different response structures
+      const suppliersData = Array.isArray(suppliersResponse) ? suppliersResponse : 
+                           Array.isArray(suppliersResponse?.data) ? suppliersResponse.data :
+                           Array.isArray(suppliersResponse?.suppliers) ? suppliersResponse.suppliers : [];
+
+      console.log('Final suppliersData:', suppliersData.length, 'suppliers');
+      console.log('=== END Suppliers API Debug ===');
 
       // Fetch Free Fire products
       const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
 
-      // Filter produk GMFF dan FFP
-      const gameProducts = productsResponse.data.filter(product => 
+      // Filter produk GMFF dan FFP - handle response structure
+      const productsData = Array.isArray(productsResponse.data) ? productsResponse.data : 
+                           Array.isArray(productsResponse) ? productsResponse : [];
+      
+      const gameProducts = productsData.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
       );
 
@@ -91,12 +108,18 @@ const FreeFireUpdate = () => {
       const supplierNames = new Set();
       const supplierModuleMapping = new Map();
       
+      console.log('=== DEBUG: Fetching suppliers for products ===');
+      console.log('Game products found:', gameProducts.length);
+      
       // Batch fetch suppliers for all products to reduce API calls
       const supplierPromises = gameProducts.map(async (product) => {
         try {
           const productSuppliersResponse = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${product.id}`);
 
-          const productSuppliers = productSuppliersResponse;
+          const productSuppliers = Array.isArray(productSuppliersResponse) ? productSuppliersResponse : 
+                               Array.isArray(productSuppliersResponse?.data) ? productSuppliersResponse.data : [];
+          
+          console.log(`Product ${product.id} (${product.code}):`, productSuppliers.length, 'suppliers');
           
           // Add supplier names and their modules_id to our mapping
           productSuppliers.forEach(supplier => {
@@ -116,15 +139,41 @@ const FreeFireUpdate = () => {
       await Promise.all(supplierPromises);
 
       // Filter suppliers that are actually used in Free Fire products
-      const relevantSuppliers = suppliersResponse.data.filter(supplier => 
-        supplierNames.has(supplier.name)
-      );
+      
+      console.log('=== DEBUG: Supplier Filtering ===');
+      console.log('Total suppliers from API:', suppliersData.length);
+      console.log('Supplier names from products:', Array.from(supplierNames));
+      console.log('All suppliers:', suppliersData.map(s => ({ id: s.id, name: s.name })));
+      
+      // Create normalized supplier names for case-insensitive matching
+      const normalizedSupplierNames = new Set(Array.from(supplierNames).map(name => name.toLowerCase().trim()));
+      
+      console.log('Normalized supplier names:', Array.from(normalizedSupplierNames));
+      
+      const relevantSuppliers = suppliersData.filter(supplier => {
+        if (!supplier || !supplier.name) return false;
+        const normalizedName = supplier.name.toLowerCase().trim();
+        const isMatch = normalizedSupplierNames.has(normalizedName);
+        if (isMatch) {
+          console.log(`✓ Matched: "${supplier.name}" -> "${normalizedName}"`);
+        }
+        return isMatch;
+      });
+      
+      console.log('Relevant suppliers (after filter):', relevantSuppliers.length);
+      console.log('Filtered suppliers:', relevantSuppliers.map(s => ({ id: s.id, name: s.name })));
 
+      console.log('=== DEBUG: Setting state ===');
+      console.log('About to setAllSuppliers with:', relevantSuppliers.length, 'suppliers');
+      
       setAllSuppliers(relevantSuppliers);
+      
+      console.log('✓ setAllSuppliers called');
 
       console.log('Free Fire Products:', gameProducts.length);
       console.log('Relevant Suppliers:', relevantSuppliers.length);
       console.log('Supplier Module Mapping:', supplierModuleMapping);
+      console.log('=== END DEBUG ===');
 
     } catch (error) {
       console.error('Error fetching Free Fire products and suppliers:', error);
@@ -144,7 +193,8 @@ const FreeFireUpdate = () => {
       const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
       
       // Filter produk GMFF dan FFP
-      const gameProducts = productsResponse.data.filter(product => 
+      const productsData = Array.isArray(productsResponse.data) ? productsResponse.data : [];
+      const gameProducts = productsData.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
       );
 
@@ -187,7 +237,8 @@ const FreeFireUpdate = () => {
       // Fetch supplier products
       const supplierProductsResponse = await socxApi.socxGet(`/api/v1/suppliers_products/list/${selectedSupplier}`);
 
-      const filtered = supplierProductsResponse.filter((sp) => {
+      const supplierProductsData = Array.isArray(supplierProductsResponse) ? supplierProductsResponse : [];
+      const filtered = supplierProductsData.filter((sp) => {
         const base = sp.code.replace(/\d+/g, '');
         return baseCodes.includes(base);
       }).map(sp => {
@@ -289,7 +340,7 @@ const FreeFireUpdate = () => {
     try {
       const response = await socxApi.socxGet(`/api/v1/products_has_suppliers_modules/product/${productId}`);
 
-      const allSuppliers = response;
+      const allSuppliers = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
       const statusResults = [];
 
       const updatePromises = allSuppliers.map(async (supplier) => {
@@ -372,7 +423,8 @@ const FreeFireUpdate = () => {
       const productsResponse = await socxApi.socxGet(`/api/v1/products/filter/${CONFIG.CATEGORY_ID}/${CONFIG.PROVIDER_ID}`);
 
       // Filter produk GMFF dan FFP
-      const gameProducts = productsResponse.data.filter(product => 
+      const productsData = Array.isArray(productsResponse.data) ? productsResponse.data : [];
+      const gameProducts = productsData.filter(product => 
         product.code && (product.code.toUpperCase().includes('GMFF') || product.code.toUpperCase().includes('FFP'))
       );
 
