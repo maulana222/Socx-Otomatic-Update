@@ -33,38 +33,122 @@ const TriProduksi = () => {
 
   // Data statis Tri Rita berdasarkan response (harga dalam Rupiah)
   const triRitaStaticDataRaw = [
-    { name: "Tri Data Happy 2GB 1 Hari", price: 5000 },
-    { name: "Tri Data Happy 5GB 2 Hari", price: 10000 },
-    { name: "Tri Data Happy 12GB 3 Hari", price: 15000 },
-    { name: "Tri Data Happy 10GB 5 Hari", price: 20000 },
-    { name: "Tri Data Happy 5GB 7 Hari", price: 20000 },
-    { name: "Tri Data Happy 8GB 7 Hari", price: 20000 },
-    { name: "Tri Data Happy 9GB 7 Hari", price: 20000 },
-    { name: "Tri Data Happy 10GB 7 Hari", price: 20000 },
+    // 1 Hari
+    { name: "Tri Data Happy 1.5 GB 1 Hari", price: 5340 },
+    { name: "Tri Data Happy 2 GB 1 Hari", price: 5350 },
+    { name: "Tri Data Happy 2.5 GB 1 Hari", price: 5790 },
+    { name: "Tri Data Happy 3 GB 1 Hari", price: 6960 },
+    { name: "Tri Data Happy 5 GB 1 Hari", price: 8570 },
+    
+    // 2 Hari
+    { name: "Tri Data Happy 3 GB 2 Hari", price: 8560 },
+    { name: "Tri Data Happy 5 GB 2 Hari", price: 8575 },
+    { name: "Tri Data Happy 6 GB 2 Hari", price: 8635 },
+    
+    // 3 Hari
+    { name: "Tri Data Happy 1 GB 3 Hari", price: 6500 },
+    { name: "Tri Data Happy 1.5 GB 3 Hari", price: 0 },
+    { name: "Tri Data Happy 3 GB 3 Hari", price: 10300 },
+    { name: "Tri Data Happy 3.5 GB 3 Hari", price: 0 },
+    { name: "Tri Data Happy 4 GB 3 Hari", price: 0 },
+    { name: "Tri Data Happy 5 GB 3 Hari", price: 12750 },
+    { name: "Tri Data Happy 6 GB 3 Hari", price: 13650 },
+    { name: "Tri Data Happy 8 GB 3 Hari", price: 0 },
+    
+    // 5 Hari
+    { name: "Tri Data Happy 1 GB 5 Hari", price: 0 },
+    { name: "Tri Data Happy 2 GB 5 Hari", price: 14830 },
+    { name: "Tri Data Happy 3.5 GB 5 Hari", price: 14850 },
+    { name: "Tri Data Happy 4.5 GB 5 Hari", price: 14860 },
+    { name: "Tri Data Happy 5 GB 5 Hari", price: 14900 },
+    { name: "Tri Data Happy 6 GB 5 Hari", price: 19150 },
+    { name: "Tri Data Happy 7 GB 5 Hari", price: 19350 },
+    { name: "Tri Data Happy 8 GB 5 Hari", price: 0 },
+    { name: "Tri Data Happy 9 GB 5 Hari", price: 0 },
+    { name: "Tri Data Happy 10 GB 5 Hari", price: 0 },
+    
+    // 7 Hari
+    { name: "Tri Data Happy 1.5 GB 7 Hari", price: 9510 },
+    { name: "Tri Data Happy 3 GB 7 Hari", price: 18796 },
+    { name: "Tri Data Happy 4.5 GB 7 Hari", price: 0 },
+    { name: "Tri Data Happy 5 GB 7 Hari", price: 22000 },
+    { name: "Tri Data Happy 8 GB 7 Hari", price: 22305 },
+    { name: "Tri Data Happy 9 GB 7 Hari", price: 22050 },
+    { name: "Tri Data Happy 10 GB 7 Hari", price: 22100 },
+    { name: "Tri Data Happy 12 GB 7 Hari", price: 0 },
+    { name: "Tri Data Happy 15 GB 7 Hari", price: 27230 },
+    { name: "Tri Data Happy 17 GB 7 Hari", price: 0 },
     { name: "Tri Data Happy 18GB 7 Hari", price: 30000 },
-    { name: "Tri Data Happy 3GB 14 Hari", price: 25000 },
+    
+    // 10 Hari
+    { name: "Tri Data Happy 9 GB 10 Hari", price: 30000 },
+    { name: "Tri Data Happy 10 GB 10 Hari", price: 31700 },
+    
+    // 14 Hari
+    { name: "Tri Data Happy 3 GB 14 Hari", price: 20350 },
+    { name: "Tri Data Happy 23 GB 14 Hari", price: 0 },
     { name: "Tri Data Happy 35GB 14 Hari", price: 50000 },
-    { name: "Tri Data Happy 7GB 28 Hari", price: 28000 },
-    { name: "Tri Data Happy 9GB 28 Hari", price: 32000 },
-    { name: "Tri Data Happy 10GB 28 Hari", price: 31200 },
-    { name: "Tri Data Happy 11GB 28 Hari", price: 35000 },
-    { name: "Tri Data Happy 13GB 28 Hari", price: 41000 },
-    { name: "Tri Data Happy 14GB 28 Hari", price: 41000 },
-    { name: "Tri Data Happy 15GB 28 Hari", price: 45000 },
-    { name: "Tri Data Happy 18GB 28 Hari", price: 51000 },
-    { name: "Tri Data Happy 20GB 28 Hari", price: 52000 },
-    { name: "Tri Data Happy 25GB 28 Hari", price: 70000 },
-    { name: "Tri Data Happy 30GB 28 Hari", price: 75000 },
-    { name: "Tri Data Happy 42GB 28 Hari", price: 75000 },
-    { name: "Tri Data Happy 55GB 28 Hari", price: 10000 },
-    { name: "Tri Data Happy 100GB 28 Hari", price: 100000 },
-    { name: "Tri Data Happy 150GB 30 Hari", price: 125000 },
-    { name: "Tri Data Happy 7GB 5 Hari", price: 15000 },
+    
+    // 20 Hari
+    { name: "Tri Data Happy 3 GB 20 Hari", price: 0 },
+    
+    // 28 Hari
+    { name: "Tri Data Happy 2.5 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 3 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 3.5 GB 28 Hari", price: 21600 },
+    { name: "Tri Data Happy 4.5 GB 28 Hari", price: 24190 },
+    { name: "Tri Data Happy 5 GB 28 Hari", price: 24210 },
+    { name: "Tri Data Happy 6 GB 28 Hari", price: 27150 },
+    { name: "Tri Data Happy 7GB 28 Hari", price: 27150 },
+    { name: "Tri Data Happy 9GB 28 Hari", price: 29925 },
+    { name: "Tri Data Happy 10 GB 28 Hari", price: 33900 },
+    { name: "Tri Data Happy 11 GB 28 Hari", price: 34000 },
+    { name: "Tri Data Happy 12 GB 28 Hari", price: 44450 },
+    { name: "Tri Data Happy 13 GB 28 Hari", price: 43050 },
+    { name: "Tri Data Happy 13.5 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 14 GB 28 Hari", price: 44485 },
+    { name: "Tri Data Happy 14 GB (11GB + 3GB 5G) 28 Hari", price: 35600 },
+    { name: "Tri Data Happy 15 GB 28 Hari", price: 47800 },
+    { name: "Tri Data Happy 18 GB 28 Hari", price: 49800 },
+    { name: "Tri Data Happy 20 GB 28 Hari", price: 56800 },
+    { name: "Tri Data Happy 25 GB 28 Hari", price: 58200 },
+    { name: "Tri Data Happy 26 GB 28 Hari", price: 67500 },
+    { name: "Tri Data Happy 30 GB 28 Hari", price: 70500 },
+    { name: "Tri Data Happy 32 GB 28 Hari", price: 70560 },
+    { name: "Tri Data Happy 35 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 40 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 42 GB 28 Hari", price: 71850 },
+    { name: "Tri Data Happy 45 GB 28 Hari", price: 88800 },
+    { name: "Tri Data Happy 47 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 50 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 55 GB 28 Hari", price: 89300 },
+    { name: "Tri Data Happy 65 GB 28 Hari", price: 89700 },
+    { name: "Tri Data Happy 70 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 75 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 80 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 100 GB 28 Hari", price: 116150 },
+    { name: "Tri Data Happy 130 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 150 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 250 GB 28 Hari", price: 0 },
+    { name: "Tri Data Happy 260 GB 28 Hari", price: 0 },
+    
+    // 30 Hari (diurutkan dari kecil ke besar)
+    { name: "Tri Data Happy 6 GB 30 Hari", price: 0 },
+    { name: "Tri Data Happy Spesial 30 GB 30 Hari", price: 0 },
+    { name: "Tri Data Happy Spesial 60 GB 30 Hari", price: 0 },
     { name: "Tri Data Happy 60GB 30 Hari", price: 100000 },
     { name: "Tri Data Happy 75GB 30 Hari", price: 120000 },
-    { name: "Tri Data Happy 100GB 28 Hari", price: 150000 },
-    { name: "Tri Data Happy 100GB (50GB Nasional + 50GB InternetTri) 30 Hari", price: 150000 }
-  ];
+    { name: "Tri Data Happy Spesial 90 GB 30 Hari", price: 0 },
+    { name: "Tri Data Happy 100 GB 30 Hari", price: 150000 },
+    { name: "Tri Data Happy 100GB (50GB Nasional + 50GB InternetTri) 30 Hari", price: 150000 },
+    { name: "Tri Data Happy 150GB 30 Hari", price: 125000 },
+    { name: "Tri Data Happy Spesial 150 GB 30 Hari", price: 0 },
+    { name: "Tri Data Happy Spesial 300 GB 30 Hari", price: 0 },
+    
+    // 60 Hari
+    { name: "Tri Data Happy 55 GB 60 Hari", price: 0 },
+    { name: "Tri Data Happy 75 GB 60 Hari", price: 0 }
+];
 
   // Fungsi untuk menghapus duplikat berdasarkan nama dan harga
   const removeDuplicates = (data) => {
