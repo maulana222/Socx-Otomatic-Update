@@ -30,43 +30,79 @@ const IsimpleProduksi = () => {
   const [inputMode, setInputMode] = useState('nomor'); 
 
   const indosatStaticDataRaw = [
-    { name: "Indosat Freedom Internet 1.5 GB 1 Hari", price: 4375 },
-    { name: "Indosat Freedom Internet 1 GB 2 Hari", price: 5650 },
-    { name: "Indosat Freedom Internet 2 GB 1 Hari", price: 6725 },
-    { name: "Indosat Freedom Internet 3 GB 1 Hari", price: 6665 },
-    { name: "Indosat Freedom Internet 1.5 GB 3 Hari", price: 8350 },
-    { name: "Indosat Freedom Internet 3 GB 3 Hari", price: 10200 },
-    { name: "Indosat Freedom Internet 5 GB 2 Hari", price: 8198 },
-    { name: "Indosat Freedom Internet 2.5 GB 5 Hari", price: 12375 },
-    { name: "Indosat Freedom Internet 5 GB 3 Hari", price: 12785 },
-    { name: "Indosat Freedom Internet 3.5 GB 5 Hari", price: 13815 },
-    { name: "Indosat Freedom Internet 5 GB 5 Hari", price: 14625 },
-    { name: "Indosat Freedom Internet 4 GB 5 Hari", price: 17400 },
-    { name: "Indosat Freedom Internet 15 GB 7 Hari", price: 25100 },
-    { name: "Indosat Freedom Internet 7 GB 7 Hari", price: 20100 },
-    { name: "Indosat Freedom Internet 3 GB 14 Hari", price: 19860 },
+    // 1 Hari
+    { name: "Indosat Freedom Internet 1.5 GB 1 Hari", price: 5850 },
+    { name: "Indosat Freedom Internet 2 GB 1 Hari", price: 6770 },
+    { name: "Indosat Freedom Internet 3 GB 1 Hari", price: 6900 },
+    { name: "Indosat Freedom Internet 10 GB 1 Hari", price: 0 }, // BARU - belum ada harga
+    
+    // 2 Hari
+    { name: "Indosat Freedom Internet 1 GB 2 Hari", price: 5820 },
+    { name: "Indosat Freedom Internet 5 GB 2 Hari", price: 8335 },
+    
+    // 3 Hari
+    { name: "Indosat Freedom Internet 1.5 GB 3 Hari", price: 8255 },
+    { name: "Indosat Freedom Internet 2.5 GB 3 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 3 GB 3 Hari", price: 11295 },
+    { name: "Indosat Freedom Internet 4 GB 3 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 5 GB 3 Hari", price: 12445 },
+    { name: "Indosat Freedom Internet 15 GB 3 Hari", price: 20975 },
+    
+    // 5 Hari
+    { name: "Indosat Freedom Internet 2 GB 5 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 2.5 GB 5 Hari", price: 12385 },
+    { name: "Indosat Freedom Internet 3 GB 5 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 3.5 GB 5 Hari", price: 13455 },
+    { name: "Indosat Freedom Internet 4 GB 5 Hari", price: 13565 },
+    { name: "Indosat Freedom Internet 5 GB 5 Hari", price: 16490 },
+    { name: "Indosat Freedom Internet 6 GB 5 Hari", price: 16490 },
+    { name: "Indosat Freedom Internet 7 GB 5 Hari", price: 18800 },
+    { name: "Indosat Freedom Internet 8 GB 5 Hari", price: 21000 },
+    { name: "Indosat Freedom Internet 15 GB 5 Hari", price: 0 }, // BARU - belum ada harga
+    
+    // 7 Hari
+    { name: "Indosat Freedom Internet 7 GB 7 Hari", price: 21950 },
+    { name: "Indosat Freedom Internet 9 GB 7 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 15 GB 7 Hari", price: 27450 },
+    { name: "Indosat Freedom Internet 18 GB 7 Hari", price: 34000 },
+    
+    // 14 Hari
+    { name: "Indosat Freedom Internet 3 GB 14 Hari", price: 19503 },
+    
+    // 28 Hari
+    { name: "Indosat Freedom Internet 1 GB 28 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 1.5 GB 28 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 3 GB 28 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 4 GB 28 Hari", price: 29255 },
     { name: "Indosat Freedom Internet 5 GB 28 Hari", price: 24900 },
-    { name: "Indosat Freedom Internet 4 GB 28 Hari", price: 24885 },
-    { name: "Indosat Freedom Internet 5.5 GB 28 Hari", price: 21120 },
-    { name: "Indosat Freedom Internet 6 GB 28 Hari", price: 24815 },
-    { name: "Indosat Freedom Internet 6.5 GB 28 Hari", price: 28500 },
-    { name: "Indosat Freedom Internet 7 GB 28 Hari", price: 25500 },
-    { name: "Indosat Freedom Internet 9 GB 28 Hari", price: 30125 },
-    { name: "Indosat Freedom Internet 10 GB 28 Hari", price: 29275 },
-    { name: "Indosat Freedom Internet 12 GB 28 Hari", price: 32925 },
-    { name: "Indosat Freedom Internet 13 GB 28 Hari", price: 41800 },
-    { name: "Indosat Freedom Internet 14 GB 28 Hari", price: 42135 },
-    { name: "Indosat Freedom Internet 15 GB 28 Hari", price: 40025 },
-    { name: "Indosat Freedom Internet 16 GB 28 Hari", price: 39975 },
-    { name: "Indosat Freedom Internet 18 GB 28 Hari", price: 50450 },
-    { name: "Indosat Freedom Internet 20 GB 28 Hari", price: 50025 },
-    { name: "Indosat Freedom Internet 25 GB 28 Hari", price: 50100 },
-    { name: "Indosat Freedom Internet 28 GB 28 Hari", price: 59950 },
-    { name: "Indosat Freedom Internet 30 GB 28 Hari", price: 58875 },
-    { name: "Indosat Freedom Internet 42 GB 28 Hari", price: 78100 },
+    { name: "Indosat Freedom Internet 5.5 GB 28 Hari", price: 28900 },
+    { name: "Indosat Freedom Internet 6 GB 28 Hari", price: 28850 },
+    { name: "Indosat Freedom Internet 6.5 GB 28 Hari", price: 30375 },
+    { name: "Indosat Freedom Internet 7 GB 28 Hari", price: 30410 },
+    { name: "Indosat Freedom Internet 8 GB 28 Hari", price: 30900 },
+    { name: "Indosat Freedom Internet 9 GB 28 Hari", price: 33475 },
+    { name: "Indosat Freedom Internet 10 GB 28 Hari", price: 33485 },
+    { name: "Indosat Freedom Internet 12 GB 28 Hari", price: 43850 },
+    { name: "Indosat Freedom Internet 13 GB 28 Hari", price: 47000 },
+    { name: "Indosat Freedom Internet 14 GB 28 Hari", price: 47425 },
+    { name: "Indosat Freedom Internet 15 GB 28 Hari", price: 48600 },
+    { name: "Indosat Freedom Internet 16 GB 28 Hari", price: 48700 },
+    { name: "Indosat Freedom Internet 18 GB 28 Hari", price: 56000 },
+    { name: "Indosat Freedom Internet 20 GB 28 Hari", price: 57000 },
+    { name: "Indosat Freedom Internet 25 GB 28 Hari", price: 58950 },
+    { name: "Indosat Freedom Internet 28 GB 28 Hari", price: 59400 },
+    { name: "Indosat Freedom Internet 30 GB 28 Hari", price: 59150 },
+    { name: "Indosat Freedom Internet 35 GB 28 Hari", price: 79600 },
+    { name: "Indosat Freedom Internet 42 GB 28 Hari", price: 85750 },
+    { name: "Indosat Freedom Internet 50 GB 28 Hari", price: 93260 },
+    { name: "Indosat Freedom Internet 80 GB 28 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 90 GB 28 Hari", price: 0 }, // BARU - belum ada harga
+    { name: "Indosat Freedom Internet 100 GB 28 Hari", price: 126500 },
+    { name: "Indosat Freedom Internet 150 GB 28 Hari", price: 130500 },
     { name: "Indosat Freedom Internet Sensasi 50 GB 28 Hari", price: 80975 },
-    { name: "Indosat Freedom Internet Sensasi 100 GB 28 Hari", price: 100775 }
-  ];
+    { name: "Indosat Freedom Internet Sensasi 100 GB 28 Hari", price: 100775 },
+    { name: "Indosat Freedom Internet Sensasi 150 GB 28 Hari", price: 0 } // BARU - belum ada harga
+];
 
   // Fungsi untuk menghapus duplikat berdasarkan nama dan harga
   const removeDuplicates = (data) => {
