@@ -12,6 +12,7 @@ import PulsaTransferUpdate from './pages/PulsaTransferUpdate';
 import FreeFireUpdate from './pages/FreeFireUpdate';
 import EMoneyUpdate from './pages/EMoneyUpdate';
 import IsimpleProduksi from './pages/IsimpleProduksi';
+import IsimpleProducts from './pages/IsimpleProducts';
 import TriProduksi from './pages/TriProduksi';
 import SettingsManager from './pages/SettingsManager';
 import { BearerTokenProvider } from './contexts/BearerTokenContext';
@@ -69,6 +70,11 @@ function App() {
                   <Route path="/isimple-produksi" element={
                     <ProtectedRoute>
                       <IsimpleProduksi />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/isimple-products/:projectId" element={
+                    <ProtectedRoute>
+                      <IsimpleProducts />
                     </ProtectedRoute>
                   } />
                   <Route path="/tri-produksi" element={
