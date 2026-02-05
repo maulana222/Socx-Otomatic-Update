@@ -22,25 +22,26 @@ class ApiClient {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  // Generic request method
+  // Generic request method. options.timeout (ms) overrides default (30s) for heavy requests.
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`; 
-    const apiTimeout = process.env.REACT_APP_API_TIMEOUT || 30000;
-    
+    const url = `${this.baseURL}${endpoint}`;
+    const defaultTimeout = typeof process.env.REACT_APP_API_TIMEOUT !== 'undefined' ? Number(process.env.REACT_APP_API_TIMEOUT) : 30000;
+    const apiTimeout = options.timeout != null ? Number(options.timeout) : defaultTimeout;
+    const { timeout: _omit, ...restOptions } = options;
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
         ...this.getAuthHeaders(),
-        ...options.headers,
+        ...restOptions.headers,
       },
-      ...options,
+      ...restOptions,
     };
 
     try {
-      // Create abort controller for timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), apiTimeout);
-      
+
       const response = await fetch(url, {
         ...config,
         signal: controller.signal
@@ -152,6 +153,14 @@ class ApiClient {
   async put(endpoint, data, options = {}) {
     return this.request(endpoint, {
       method: 'PUT',
+      body: JSON.stringify(data),
+      ...options
+    });
+  }
+
+  async patch(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      method: 'PATCH',
       body: JSON.stringify(data),
       ...options
     });

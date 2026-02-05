@@ -22,9 +22,13 @@ const ProjectManager = ({ selectedProject, onIsimpleProjectChange }) => {
     setIsLoading(true);
     try {
       const response = await apiClient.get('/projects/isimple');
-      console.log('Isimple project response:', response);
-      // Endpoint /projects/isimple returns single object or null
-      const projectsData = response.data ? [response.data] : [];
+      // Endpoint /projects/isimple returns { success, data: { id, name, code, ... } } — cari by code isimple
+      const raw = response.data;
+      const projectsData = Array.isArray(raw)
+        ? raw.filter((p) => p && (p.name || p.code))
+        : raw && typeof raw === 'object' && (raw.name || raw.code)
+          ? [{ ...raw }]
+          : [];
       setProjects(projectsData);
     } catch (error) {
       console.error('Error fetching isimple project:', error);
@@ -193,7 +197,11 @@ const ProjectManager = ({ selectedProject, onIsimpleProjectChange }) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <span className="mr-2">📊</span>
+            <span className="mr-2 flex-shrink-0 text-gray-600">
+              <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+              </svg>
+            </span>
             Project Management
           </h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -265,13 +273,13 @@ const ProjectManager = ({ selectedProject, onIsimpleProjectChange }) => {
                           )}
                         </div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                          <div className="text-sm font-medium text-gray-900">{project.name || project.code || `Project #${project.id}`}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {project.code}
+                        {project.code || project.name || '-'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
