@@ -13,7 +13,6 @@ if (!API_BASE_URL) {
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
-    console.log('🔗 API Base URL:', this.baseURL);
   }
 
   // Get authorization header

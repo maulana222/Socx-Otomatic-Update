@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import apiClient from '../utils/api';
@@ -163,6 +163,16 @@ const IsimpleProducts = () => {
   };
 
   const filteredReferencePrices = referencePrices.filter((p) => getProductCategory(p) === productCategoryTab);
+
+  // Urutan tampilan: Hari (naik) lalu Paket/GB (naik)
+  const sortedReferencePrices = useMemo(() => {
+    return [...filteredReferencePrices].sort((a, b) => {
+      const ai = extractPackageInfo(a.name);
+      const bi = extractPackageInfo(b.name);
+      if (ai.days !== bi.days) return ai.days - bi.days;
+      return ai.gb - bi.gb;
+    });
+  }, [filteredReferencePrices]);
 
   // Promo masuk ke produk harga pasar jika: GB >= produk, Hari >= produk, Harga promo <= harga pasar
   // Deduplikasi per product_code (satu kode bisa muncul di banyak nomor; tampilkan sekali saja)
@@ -600,7 +610,7 @@ const IsimpleProducts = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredReferencePrices.map((p) => {
+                {sortedReferencePrices.map((p) => {
                   const matchingPromos = getMatchingPromosForProduct(p);
                   const isExpanded = expandedPriceId === p.id;
                   return (
