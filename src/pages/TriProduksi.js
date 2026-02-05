@@ -30,6 +30,9 @@ const TriProduksi = () => {
   const [inputMode, setInputMode] = useState('nomor'); // 'nomor' atau 'excel'
 
   // API akan menggunakan socxApi untuk semua request
+  // Konkurensi request ke SOCX (Tri Rita): berapa nomor dicek sekaligus — percepat tanpa overload API
+  const TRI_PROMO_CONCURRENCY = 20;
+  const TRI_PROMO_CHUNK_DELAY_MS = 200;
 
   // Data statis Tri Rita berdasarkan response (harga dalam Rupiah)
   const triRitaStaticDataRaw = [
@@ -247,55 +250,65 @@ const TriProduksi = () => {
       // Set initial progress
       setProgress({ current: 0, total: nomorArray.length, currentNumber: '' });
 
-      for (let i = 0; i < nomorArray.length; i++) {
-        const nomor = nomorArray[i];
-        
-        // Update progress
-        setProgress({ 
-          current: i + 1, 
-          total: nomorArray.length, 
-          currentNumber: nomor 
+      // Proses nomor per batch (paralel) agar request ke SOCX lebih cepat
+      const chunkSize = Math.max(1, TRI_PROMO_CONCURRENCY);
+      for (let start = 0; start < nomorArray.length; start += chunkSize) {
+        const chunk = nomorArray.slice(start, start + chunkSize);
+        const chunkResults = await Promise.all(
+          chunk.map(async (nomor) => {
+            console.log(`🔍 Cek nomor: ${nomor}`);
+            const paketList = await fetchPaket(nomor);
+            return { nomor, paketList };
+          })
+        );
+
+        let lastNumber = '';
+        for (let j = 0; j < chunkResults.length; j++) {
+          const { nomor, paketList } = chunkResults[j];
+          lastNumber = nomor;
+          allResults.push({
+            nomor,
+            paketCount: paketList.length,
+            pakets: paketList
+          });
+
+          // Simpan paket unik berdasarkan registrationKey (hanya yang belum ada)
+          paketList.forEach(paket => {
+            const key = paket.registrationKey || paket.offerId;
+            if (!tempPaketUnik[key]) {
+              tempPaketUnik[key] = {
+                offerId: paket.offerId,
+                offerShortDesc: paket.offerShortDesc,
+                productPrice: paket.productPrice,
+                productType: paket.productType,
+                registrationKey: paket.registrationKey,
+                retailerIncentive: paket.retailerIncentive,
+                netPrice: paket.netPrice,
+                recommendationName: paket.recommendationName,
+                offerDescription: paket.offerDescription,
+                sequenceNumber: paket.sequenceNumber,
+                validity: paket.validity,
+                starred: paket.starred,
+                bannerColor: paket.bannerColor,
+                discountValue: paket.discountValue,
+                bestDeal: paket.bestDeal
+              };
+              tempPaketCount[key] = 0;
+            }
+            tempPaketCount[key] = (tempPaketCount[key] || 0) + 1;
+          });
+        }
+
+        setProgress({
+          current: Math.min(start + chunkSize, nomorArray.length),
+          total: nomorArray.length,
+          currentNumber: lastNumber
         });
 
-        console.log(`🔍 Cek nomor: ${nomor}`);
-        const paketList = await fetchPaket(nomor);
-        
-        allResults.push({
-          nomor,
-          paketCount: paketList.length,
-          pakets: paketList
-        });
-
-        // Simpan paket unik berdasarkan registrationKey (hanya yang belum ada)
-        paketList.forEach(paket => {
-          // Gunakan registrationKey sebagai identifier unik
-          const key = paket.registrationKey || paket.offerId;
-          if (!tempPaketUnik[key]) {
-            tempPaketUnik[key] = {
-              offerId: paket.offerId,
-              offerShortDesc: paket.offerShortDesc,
-              productPrice: paket.productPrice,
-              productType: paket.productType,
-              registrationKey: paket.registrationKey,
-              retailerIncentive: paket.retailerIncentive,
-              netPrice: paket.netPrice,
-              recommendationName: paket.recommendationName,
-              offerDescription: paket.offerDescription,
-              sequenceNumber: paket.sequenceNumber,
-              validity: paket.validity,
-              starred: paket.starred,
-              bannerColor: paket.bannerColor,
-              discountValue: paket.discountValue,
-              bestDeal: paket.bestDeal
-            };
-            tempPaketCount[key] = 0;
-          }
-          // Increment counter untuk kode ini
-          tempPaketCount[key] = (tempPaketCount[key] || 0) + 1;
-        });
-
-        // Delay untuk menghindari rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Delay singkat antar batch (bukan per nomor) untuk hindari rate limit
+        if (start + chunkSize < nomorArray.length) {
+          await new Promise(resolve => setTimeout(resolve, TRI_PROMO_CHUNK_DELAY_MS));
+        }
       }
 
       setResults(allResults);
