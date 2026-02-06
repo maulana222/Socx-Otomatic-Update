@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import apiClient from '../utils/api';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 
 const PER_PAGE = 10;
 
@@ -78,6 +79,76 @@ const IsimpleHasilCekNomor = () => {
     }
   };
 
+  const downloadHasilCek = () => {
+    if (!products || products.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak ada data',
+        text: 'Belum ada hasil pengecekan untuk didownload.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    const projectName = (project && project.name) ? String(project.name).replace(/[^\w\s-]/g, '') : 'Isimple';
+
+    // Sheet 1: Ringkasan per nomor
+    const sheetNomor = products.map((p, idx) => ({
+      No: idx + 1,
+      'Nomor Telepon': p.number || '',
+      Keterangan: p.name || '',
+      Status: p.status || '',
+      'Jumlah Paket': p.packet_count ?? 0,
+      'Terakhir Dicek': p.last_checked_at
+        ? new Date(p.last_checked_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })
+        : '',
+      'Tanggal Dibuat': p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID') : ''
+    }));
+
+    // Sheet 2: Detail promo — format: Paket, Harga (6.600), Tipe, Kode Produk
+    const formatHarga = (n) => (n == null || n === '') ? '' : String(Number(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const rowsPromo = [];
+    products.forEach((p) => {
+      const promos = p.promos || [];
+      if (promos.length === 0) {
+        rowsPromo.push({
+          'Nomor Telepon': p.number || '',
+          Paket: '',
+          Harga: '',
+          Tipe: '',
+          'Kode Produk': ''
+        });
+      } else {
+        promos.forEach((promo) => {
+          rowsPromo.push({
+            'Nomor Telepon': p.number || '',
+            Paket: promo.product_name || '',
+            Harga: formatHarga(promo.product_amount),
+            Tipe: promo.product_type || '',
+            'Kode Produk': promo.product_code || ''
+          });
+        });
+      }
+    });
+
+    const wsNomor = XLSX.utils.json_to_sheet(sheetNomor);
+    const wsPromo = XLSX.utils.json_to_sheet(rowsPromo);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, wsNomor, 'Nomor');
+    XLSX.utils.book_append_sheet(workbook, wsPromo, 'Detail Promo');
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const fileName = `hasil_cek_nomor_${projectName}_${timestamp}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil',
+      text: `File berhasil didownload: ${fileName}`,
+      confirmButtonText: 'OK'
+    });
+  };
+
   const handleDeleteProduct = async (id) => {
     const result = await Swal.fire({
       title: 'Hapus Nomor?',
@@ -110,7 +181,7 @@ const IsimpleHasilCekNomor = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <button
           onClick={() => navigate(`/isimple-products/${projectId}`)}
           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -119,6 +190,17 @@ const IsimpleHasilCekNomor = () => {
             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
           Kembali ke Produk
+        </button>
+        <button
+          type="button"
+          onClick={downloadHasilCek}
+          disabled={!products || products.length === 0}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg className="-ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Hasil Cek (Excel)
         </button>
       </div>
 

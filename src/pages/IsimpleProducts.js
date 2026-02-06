@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useBearerToken } from '../contexts/BearerTokenContext';
 import apiClient from '../utils/api';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 
 const IsimpleProducts = () => {
   const navigate = useNavigate();
@@ -21,9 +22,13 @@ const IsimpleProducts = () => {
   const [loadingPrices, setLoadingPrices] = useState(false);
   const [expandedPriceId, setExpandedPriceId] = useState(null);
   const [savingPriceId, setSavingPriceId] = useState(null);
+  const [savingAllPrices, setSavingAllPrices] = useState(false);
   const [deletingPriceId, setDeletingPriceId] = useState(null);
-  const [savingPromoId, setSavingPromoId] = useState(null);
+  const [savingPromoToSocxId, setSavingPromoToSocxId] = useState(null);
+  const [updatingAllPromosToSocxId, setUpdatingAllPromosToSocxId] = useState(null);
   const [productCategoryTab, setProductCategoryTab] = useState('harian'); // 'harian' | 'bulanan' | 'sensasi'
+  const [promoExistsInSuppliers, setPromoExistsInSuppliers] = useState(new Map()); // Map<product_code, boolean> - cek apakah promo ada di suppliers_products
+  const [checkingPromoExists, setCheckingPromoExists] = useState(null); // product id yang sedang dicek
 
   const fetchProducts = useCallback(async () => {
     if (!bearerToken || !projectId) return;
@@ -174,12 +179,16 @@ const IsimpleProducts = () => {
     });
   }, [filteredReferencePrices]);
 
+  // Flatten semua promo sekali (hindari recompute per-row)
+  const allPromos = useMemo(() => {
+    return products.flatMap((n) => (n.promos || []).map((promo) => ({ ...promo })));
+  }, [products]);
+
   // Promo masuk ke produk harga pasar jika: GB >= produk, Hari >= produk, Harga promo <= harga pasar
   // Deduplikasi per product_code (satu kode bisa muncul di banyak nomor; tampilkan sekali saja)
   const getMatchingPromosForProduct = (product) => {
     const staticInfo = extractPackageInfo(product.name);
     const marketPrice = Number(product.price || 0);
-    const allPromos = products.flatMap((n) => (n.promos || []).map((promo) => ({ ...promo })));
     const seen = new Set();
     return allPromos.filter((promo) => {
       const info = extractPackageInfo(promo.product_name || '');
@@ -198,19 +207,53 @@ const IsimpleProducts = () => {
     setReferencePrices((prev) => prev.map((p) => (p.id === id ? { ...p, price: num } : p)));
   };
 
+  const updateSocxCodeLocally = (id, value) => {
+    setReferencePrices((prev) => prev.map((p) => (p.id === id ? { ...p, socx_code: value } : p)));
+  };
+
   const saveReferencePrice = async (id) => {
     const p = referencePrices.find((r) => r.id === id);
     if (!p) return;
     setSavingPriceId(id);
     try {
-      await apiClient.put(`/isimple-products/${id}`, { price: p.price });
-      Swal.fire({ icon: 'success', title: 'Tersimpan', text: 'Harga berhasil disimpan', confirmButtonText: 'OK' });
+      await apiClient.put(`/isimple-products/${id}`, { price: p.price, socx_code: p.socx_code ?? '' });
+      Swal.fire({ icon: 'success', title: 'Tersimpan', text: 'Harga dan Kode SOCX berhasil disimpan', confirmButtonText: 'OK' });
       await fetchReferencePrices();
     } catch (e) {
       console.error(e);
-      Swal.fire({ icon: 'error', title: 'Gagal', text: e.message || 'Gagal menyimpan harga', confirmButtonText: 'OK' });
+      Swal.fire({ icon: 'error', title: 'Gagal', text: e.message || 'Gagal menyimpan', confirmButtonText: 'OK' });
     } finally {
       setSavingPriceId(null);
+    }
+  };
+
+  const saveAllReferencePrices = async () => {
+    if (!referencePrices.length) return;
+    setSavingAllPrices(true);
+    try {
+      let ok = 0;
+      let fail = 0;
+      for (const p of referencePrices) {
+        if (p.id == null) continue;
+        try {
+          await apiClient.put(`/isimple-products/${p.id}`, { price: p.price });
+          ok++;
+        } catch (e) {
+          console.error(e);
+          fail++;
+        }
+      }
+      await fetchReferencePrices();
+      if (fail > 0) {
+        Swal.fire({ icon: 'warning', title: 'Selesai', text: `Tersimpan: ${ok}, Gagal: ${fail}`, confirmButtonText: 'OK' });
+      } else {
+        Swal.fire({ icon: 'success', title: 'Tersimpan', text: `Semua harga (${ok}) berhasil disimpan`, confirmButtonText: 'OK' });
+      }
+    } catch (e) {
+      console.error(e);
+      Swal.fire({ icon: 'error', title: 'Gagal', text: e.message || 'Gagal menyimpan', confirmButtonText: 'OK' });
+    } finally {
+      setSavingAllPrices(false);
     }
   };
 
@@ -240,20 +283,164 @@ const IsimpleProducts = () => {
     }
   };
 
-  const handleSavePromo = async (promoId) => {
-    if (!promoId) return;
-    setSavingPromoId(promoId);
+  const handleSavePromoToSocx = async (promo) => {
+    if (!promo?.product_code) return;
+    const numberRow = products.find((n) => n.id === promo.isimple_number_id);
+    const msisdn = numberRow?.number;
+    if (!msisdn) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nomor tidak ditemukan',
+        text: 'Data nomor untuk promo ini tidak tersedia. Refresh halaman dan coba lagi.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    setSavingPromoToSocxId(promo.id);
     try {
-      await apiClient.patch(`/promo-products/${promoId}/selected`, { is_selected: true });
-      await fetchProducts();
-      Swal.fire({ icon: 'success', title: 'Tersimpan', text: 'Promo berhasil disimpan/dipilih', confirmButtonText: 'OK' });
+      await apiClient.request('/socx/apply-promo', {
+        method: 'POST',
+        body: JSON.stringify({
+          msisdn,
+          product_code: promo.product_code,
+          product_name: promo.product_name || undefined,
+          product_amount: promo.product_amount != null ? Number(promo.product_amount) : undefined
+        })
+      });
+      Swal.fire({ icon: 'success', title: 'Terkirim ke SOCX', text: 'Promo berhasil dikirim ke SOCX.', confirmButtonText: 'OK' });
     } catch (e) {
       console.error(e);
-      Swal.fire({ icon: 'error', title: 'Gagal', text: e.message || 'Gagal menyimpan promo', confirmButtonText: 'OK' });
+      const msg = e.response?.data?.message || e.response?.data?.error || e.message || 'Gagal mengirim ke SOCX';
+      Swal.fire({ icon: 'error', title: 'Gagal', text: msg, confirmButtonText: 'OK' });
     } finally {
-      setSavingPromoId(null);
+      setSavingPromoToSocxId(null);
     }
   };
+
+  const handleUpdateAllPromosToSocx = async (product) => {
+    const matchingPromos = getMatchingPromosForProduct(product);
+    if (!matchingPromos.length) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Tidak ada promo',
+        text: 'Tidak ada promo yang masuk ke produk ini. Cek nomor dulu atau naikkan harga pasar.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    const socxCode = product?.socx_code != null ? String(product.socx_code).trim() : '';
+    if (!socxCode) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Kode SOCX kosong',
+        text: 'Isi dulu kolom Kode SOCX (mis: IF14, IDF10), lalu klik update lagi.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    setUpdatingAllPromosToSocxId(product.id);
+    try {
+      const promosPayload = matchingPromos.map((promo) => ({
+        product_code: promo.product_code,
+        product_name: promo.product_name,
+        product_amount: promo.product_amount != null ? Number(promo.product_amount) : 0
+      }));
+
+      const resp = await apiClient.request('/socx/isimple/sync-product-prices', {
+        method: 'POST',
+        body: JSON.stringify({
+          socx_code: socxCode,
+          promos: promosPayload,
+          suppliers_id: 35 // iSimple supplier ID di SOCX
+        })
+      });
+
+      const s = resp?.summary;
+      Swal.fire({
+        icon: 'success',
+        title: 'Selesai sync ke SOCX',
+        text: s
+          ? `Match: ${s.matched}/${s.input_promos}, Update: ${s.updated_suppliers}, Created: ${s.created || 0}, Skip: ${s.skipped_suppliers}, Not found: ${s.not_found}, Harga produk (max): ${s.max_price}`
+          : 'Sync selesai.',
+        confirmButtonText: 'OK'
+      });
+    } finally {
+      setUpdatingAllPromosToSocxId(null);
+    }
+  };
+
+  const checkPromosInSuppliers = useCallback(async (productId, promos) => {
+    if (!promos || promos.length === 0) {
+      console.log('[Check Promos] No promos to check for product:', productId);
+      return;
+    }
+    console.log('[Check Promos] Starting check for product:', productId, 'Promos:', promos.map(p => p.product_code));
+    setCheckingPromoExists(productId);
+    try {
+      const resp = await apiClient.request('/socx/proxy/request', {
+        method: 'POST',
+        body: JSON.stringify({
+          method: 'GET',
+          endpoint: '/api/v1/suppliers_products/list/35'
+        })
+      });
+      console.log('[Check Promos] Raw response:', resp);
+      
+      // Handle different response formats
+      let suppliersProducts = [];
+      if (Array.isArray(resp)) {
+        suppliersProducts = resp;
+      } else if (resp && Array.isArray(resp.data)) {
+        suppliersProducts = resp.data;
+      } else if (resp && resp.success && Array.isArray(resp.data)) {
+        suppliersProducts = resp.data;
+      }
+      
+      console.log('[Check Promos] Parsed suppliers products:', suppliersProducts.length, 'items');
+      console.log('[Check Promos] Sample codes from suppliers:', suppliersProducts.slice(0, 5).map(sp => sp.code));
+      
+      const existsMap = new Map();
+      promos.forEach((promo) => {
+        const promoCode = promo?.product_code ? String(promo.product_code).trim().toUpperCase() : '';
+        if (!promoCode) {
+          existsMap.set('', false);
+          return;
+        }
+        const exists = suppliersProducts.some((sp) => {
+          const supplierCode = sp?.code ? String(sp.code).trim().toUpperCase() : '';
+          return supplierCode === promoCode;
+        });
+        existsMap.set(promoCode, exists);
+        console.log('[Check Promos] Promo code:', promoCode, 'Exists:', exists);
+      });
+      
+      console.log('[Check Promos] Final exists map:', Array.from(existsMap.entries()));
+      
+      setPromoExistsInSuppliers((prev) => {
+        const newMap = new Map(prev);
+        existsMap.forEach((exists, code) => {
+          newMap.set(code, exists);
+        });
+        console.log('[Check Promos] Updated state map:', Array.from(newMap.entries()));
+        return newMap;
+      });
+    } catch (e) {
+      console.error('[Check Promos] Error check promos in suppliers:', e);
+      // Set all to false on error so buttons show red (safer)
+      const errorMap = new Map();
+      promos.forEach((promo) => {
+        const code = promo?.product_code ? String(promo.product_code).trim().toUpperCase() : '';
+        errorMap.set(code, false);
+      });
+      setPromoExistsInSuppliers((prev) => {
+        const newMap = new Map(prev);
+        errorMap.forEach((exists, code) => newMap.set(code, exists));
+        return newMap;
+      });
+    } finally {
+      setCheckingPromoExists(null);
+    }
+  }, []);
 
   const handleCopyPromo = async (promo) => {
     const text = [promo.product_name, promo.product_code, Number(promo.product_amount || 0).toLocaleString('id-ID')].filter(Boolean).join(' | ');
@@ -316,6 +503,55 @@ const IsimpleProducts = () => {
         confirmButtonText: 'OK'
       });
     }
+  };
+
+  const downloadHasilCek = () => {
+    if (!products || products.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak ada data',
+        text: 'Belum ada hasil pengecekan untuk didownload. Jalankan Cek Promo dulu atau buka Hasil Cek Nomor.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    const projectName = (project && project.name) ? String(project.name).replace(/[^\w\s-]/g, '') : 'Isimple';
+    const sheetNomor = products.map((p, idx) => ({
+      No: idx + 1,
+      'Nomor Telepon': p.number || '',
+      Keterangan: p.name || '',
+      Status: p.status || '',
+      'Jumlah Paket': p.packet_count ?? 0,
+      'Terakhir Dicek': p.last_checked_at ? new Date(p.last_checked_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '',
+      'Tanggal Dibuat': p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID') : ''
+    }));
+    const formatHarga = (n) => (n == null || n === '') ? '' : String(Number(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const rowsPromo = [];
+    products.forEach((p) => {
+      const promos = p.promos || [];
+      if (promos.length === 0) {
+        rowsPromo.push({ 'Nomor Telepon': p.number || '', Paket: '', Harga: '', Tipe: '', 'Kode Produk': '' });
+      } else {
+        promos.forEach((promo) => {
+          rowsPromo.push({
+            'Nomor Telepon': p.number || '',
+            Paket: promo.product_name || '',
+            Harga: formatHarga(promo.product_amount),
+            Tipe: promo.product_type || '',
+            'Kode Produk': promo.product_code || ''
+          });
+        });
+      }
+    });
+    const wsNomor = XLSX.utils.json_to_sheet(sheetNomor);
+    const wsPromo = XLSX.utils.json_to_sheet(rowsPromo);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, wsNomor, 'Nomor');
+    XLSX.utils.book_append_sheet(workbook, wsPromo, 'Detail Promo');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const fileName = `hasil_cek_nomor_${projectName}_${timestamp}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    Swal.fire({ icon: 'success', title: 'Berhasil', text: `File berhasil didownload: ${fileName}`, confirmButtonText: 'OK' });
   };
 
   const stopPromoCheck = async () => {
@@ -509,6 +745,17 @@ const IsimpleProducts = () => {
               Lihat Proses / Hasil Cek Nomor
             </button>
             <button
+              type="button"
+              onClick={downloadHasilCek}
+              disabled={!products || products.length === 0}
+              className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="-ml-0.5 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Hasil Cek (Excel)
+            </button>
+            <button
               onClick={startPromoCheck}
               disabled={isCheckingPromo}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
@@ -543,8 +790,28 @@ const IsimpleProducts = () => {
 
       {/* Daftar Produk = Harga Pasar (editable price, expandable = promo yang masuk) */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Daftar Produk (Harga Pasar)</h3>
-        <p className="text-sm text-gray-500 mb-4">Ubah harga lalu klik Simpan. Expand baris untuk melihat promo yang masuk.</p>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900">Daftar Produk (Harga Pasar)</h3>
+          <button
+            type="button"
+            onClick={saveAllReferencePrices}
+            disabled={savingAllPrices || !referencePrices.length}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingAllPrices ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Menyimpan...
+              </>
+            ) : (
+              'Update semua perubahan'
+            )}
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Ubah harga lalu klik Simpan per baris atau gunakan tombol di atas untuk simpan semua. Expand baris untuk melihat promo yang masuk.</p>
 
         {/* Tab: Paket Harian (< 28 hari), Bulanan (28–30 hari), Sensasi (nama mengandung Sensasi) */}
         {!loadingPrices && referencePrices.length > 0 && (
@@ -606,24 +873,35 @@ const IsimpleProducts = () => {
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10"></th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Paket</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga (Rp)</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode SOCX</th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedReferencePrices.map((p) => {
-                  const matchingPromos = getMatchingPromosForProduct(p);
                   const isExpanded = expandedPriceId === p.id;
+                  const matchingPromos = isExpanded ? getMatchingPromosForProduct(p) : [];
                   return (
                     <React.Fragment key={p.id}>
                       <tr className="hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <button
                             type="button"
-                            onClick={() => setExpandedPriceId(isExpanded ? null : p.id)}
+                            onClick={() => {
+                              const newExpanded = isExpanded ? null : p.id;
+                              setExpandedPriceId(newExpanded);
+                              if (newExpanded) {
+                                // Get matching promos langsung, bukan dari state yang belum update
+                                const currentMatchingPromos = getMatchingPromosForProduct(p);
+                                if (currentMatchingPromos.length > 0) {
+                                  checkPromosInSuppliers(p.id, currentMatchingPromos);
+                                }
+                              }
+                            }}
                             className="text-gray-500 hover:text-gray-700 focus:outline-none"
                             title={isExpanded ? 'Tutup' : 'Lihat promo yang masuk'}
                           >
-                            {matchingPromos.length > 0 ? (isExpanded ? '▼' : '▶') : '—'}
+                            {isExpanded ? '▼' : '▶'}
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.name}</td>
@@ -637,8 +915,38 @@ const IsimpleProducts = () => {
                             placeholder="0"
                           />
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="text"
+                            value={p.socx_code != null ? String(p.socx_code) : ''}
+                            onChange={(e) => updateSocxCodeLocally(p.id, e.target.value)}
+                            className="w-48 px-2 py-1 border border-gray-300 rounded text-sm font-mono"
+                            placeholder="Kode SOCX"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="inline-flex items-center gap-1">
+                          <div className="inline-flex items-center gap-1 flex-wrap justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateAllPromosToSocx(p)}
+                              disabled={
+                                updatingAllPromosToSocxId === p.id ||
+                                !(p.socx_code != null && String(p.socx_code).trim())
+                              }
+                              className="inline-flex items-center justify-center p-2 rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Update semua promo ke SOCX: kirim semua promo yang masuk ke produk ini ke SOCX"
+                            >
+                              {updatingAllPromosToSocxId === p.id ? (
+                                <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                </svg>
+                              )}
+                            </button>
                             <button
                               type="button"
                               onClick={() => saveReferencePrice(p.id)}
@@ -680,9 +988,18 @@ const IsimpleProducts = () => {
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-3 bg-gray-50 border-l border-r border-b border-gray-200">
-                            <div className="text-sm font-medium text-gray-700 mb-2">
+                          <td colSpan={5} className="px-6 py-3 bg-gray-50 border-l border-r border-b border-gray-200">
+                            <div className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                               Promo yang masuk ke produk ini ({matchingPromos.length})
+                              {checkingPromoExists === p.id && (
+                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                  <svg className="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  Mengecek kode produk...
+                                </span>
+                              )}
                             </div>
                             {matchingPromos.length === 0 ? (
                               <p className="text-gray-500 text-sm">Belum ada promo yang cocok. Cek nomor dulu atau naikkan harga pasar.</p>
@@ -719,14 +1036,35 @@ const IsimpleProducts = () => {
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => handleSavePromo(promo.id)}
-                                              disabled={savingPromoId === promo.id}
-                                              className="inline-flex items-center justify-center p-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                              title="Simpan"
+                                              onClick={() => handleSavePromoToSocx(promo)}
+                                              disabled={savingPromoToSocxId === promo.id}
+                                              className={`inline-flex items-center justify-center p-2 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                (() => {
+                                                  const promoCode = promo?.product_code ? String(promo.product_code).trim().toUpperCase() : '';
+                                                  const exists = promoExistsInSuppliers.get(promoCode);
+                                                  return exists === false ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
+                                                })()
+                                              }`}
+                                              title={
+                                                (() => {
+                                                  const promoCode = promo?.product_code ? String(promo.product_code).trim().toUpperCase() : '';
+                                                  const exists = promoExistsInSuppliers.get(promoCode);
+                                                  return exists === false
+                                                    ? 'Simpan ke SOCX (Kode produk tidak ditemukan di suppliers_products - akan dibuat otomatis saat sync)'
+                                                    : 'Simpan ke SOCX';
+                                                })()
+                                              }
                                             >
-                                              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm-2 4a1 1 0 011-1h2a1 1 0 110 2H5a1 1 0 01-1-1z" clipRule="evenodd" />
-                                              </svg>
+                                              {savingPromoToSocxId === promo.id ? (
+                                                <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                </svg>
+                                              ) : (
+                                                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm-2 4a1 1 0 011-1h2a1 1 0 110 2H5a1 1 0 01-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                              )}
                                             </button>
                                           </div>
                                         </td>
