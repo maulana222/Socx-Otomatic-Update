@@ -12,9 +12,9 @@ const IsimpleProducts = () => {
   const [project, setProject] = useState(null);
   const [products, setProducts] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ gb: '', days: '', price: '' });
+  const [newProduct, setNewProduct] = useState({ gb: '', days: '', price: '', category: 'harian' });
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
-  const [promoProgress, setPromoProgress] = useState(0);
+  const [promoProgress, setPromoProgress] = useState(0);  
   const [totalPhones, setTotalPhones] = useState(0);
   const [currentCheckingNumber, setCurrentCheckingNumber] = useState(null);
   const progressIntervalRef = useRef(null);
@@ -29,6 +29,10 @@ const IsimpleProducts = () => {
   const [productCategoryTab, setProductCategoryTab] = useState('harian'); // 'harian' | 'bulanan' | 'sensasi'
   const [promoExistsInSuppliers, setPromoExistsInSuppliers] = useState(new Map()); // Map<product_code, boolean> - cek apakah promo ada di suppliers_products
   const [checkingPromoExists, setCheckingPromoExists] = useState(null); // product id yang sedang dicek
+  const [promoCountsByCode, setPromoCountsByCode] = useState({}); // { product_code: jumlah_nomor } dari request saat dropdown expand
+  const [totalNumbersForRate, setTotalNumbersForRate] = useState(0); // total nomor di project untuk hitung rate %
+  const [loadingPromoCounts, setLoadingPromoCounts] = useState(false);
+  const [promoColumnMode, setPromoColumnMode] = useState('angka'); // 'angka' | 'rate' untuk kolom Jumlah Nomor / Rate
 
   const fetchProducts = useCallback(async () => {
     if (!bearerToken || !projectId) return;
@@ -94,12 +98,12 @@ const IsimpleProducts = () => {
         }
         setIsCheckingPromo(false);
         setCurrentCheckingNumber(null);
-        Swal.fire({
+      Swal.fire({
           icon: 'success',
           title: 'Selesai!',
           text: `Semua ${d.total || 0} nomor telah diperiksa.`,
-          confirmButtonText: 'OK'
-        });
+        confirmButtonText: 'OK'
+      });
         await fetchProducts();
       } else if (d.status === 'stopped') {
         if (progressIntervalRef.current) {
@@ -182,6 +186,23 @@ const IsimpleProducts = () => {
   // Flatten semua promo sekali (hindari recompute per-row)
   const allPromos = useMemo(() => {
     return products.flatMap((n) => (n.promos || []).map((promo) => ({ ...promo })));
+  }, [products]);
+
+  // Jumlah nomor (distinct) per product_code dari data products (nomor + promos)
+  const jumlahNomorByProductCode = useMemo(() => {
+    const map = {};
+    products.forEach((n) => {
+      const numberId = n.id;
+      (n.promos || []).forEach((promo) => {
+        const code = promo.product_code ? String(promo.product_code).trim() : '';
+        if (!code) return;
+        if (!map[code]) map[code] = new Set();
+        map[code].add(numberId);
+      });
+    });
+    const result = {};
+    Object.keys(map).forEach((code) => { result[code] = map[code].size; });
+    return result;
   }, [products]);
 
   // Promo masuk ke produk harga pasar jika: GB >= produk, Hari >= produk, Harga promo <= harga pasar
@@ -457,7 +478,7 @@ const IsimpleProducts = () => {
     setIsCheckingPromo(true);
     setPromoProgress(0);
     setCurrentCheckingNumber(null);
-
+    
     try {
       const response = await apiClient.post('/isimple-promo-check/check-all', { project_id: projectId });
       const data = response.data || response;
@@ -475,16 +496,16 @@ const IsimpleProducts = () => {
             confirmButtonText: 'OK'
           });
         } else if (data.processed !== undefined) {
-          setTotalPhones(total);
+      setTotalPhones(total);
           setPromoProgress(data.processed || 0);
-          Swal.fire({
-            icon: 'success',
-            title: 'Selesai!',
-            text: `Semua ${total} nomor telah diperiksa.`,
-            confirmButtonText: 'OK'
-          });
-          await fetchProducts();
-        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Selesai!',
+          text: `Semua ${total} nomor telah diperiksa.`,
+          confirmButtonText: 'OK'
+        });
+        await fetchProducts();
+      }
         return;
       }
 
@@ -609,7 +630,7 @@ const IsimpleProducts = () => {
     }
     if (priceNum <= 0) {
       Swal.fire({
-        icon: 'warning',
+      icon: 'warning',
         title: 'Perhatian!',
         text: 'Harga (Rp) wajib diisi dan harus lebih dari 0',
         confirmButtonText: 'OK'
@@ -621,11 +642,12 @@ const IsimpleProducts = () => {
       await apiClient.post('/isimple-products', {
         gb: gbNum,
         days: daysNum,
-        price: priceNum
+        price: priceNum,
+        category: newProduct.category || 'harian'
       });
       await fetchReferencePrices();
       setShowAddModal(false);
-      setNewProduct({ gb: '', days: '', price: '' });
+      setNewProduct({ gb: '', days: '', price: '', category: 'harian' });
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -755,24 +777,24 @@ const IsimpleProducts = () => {
               </svg>
               Download Hasil Cek (Excel)
             </button>
-            <button
-              onClick={startPromoCheck}
-              disabled={isCheckingPromo}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {isCheckingPromo ? (
-                <>
+          <button
+            onClick={startPromoCheck}
+            disabled={isCheckingPromo}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isCheckingPromo ? (
+              <>
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
                   {totalPhones > 0 ? `Mengecek ${promoProgress}/${totalPhones}...` : 'Memeriksa...'}
-                </>
-              ) : (
-                'Mulai Cek Promo'
-              )}
-            </button>
-            {isCheckingPromo && (
+              </>
+            ) : (
+              'Mulai Cek Promo'
+            )}
+          </button>
+        {isCheckingPromo && (
               <button
                 type="button"
                 onClick={stopPromoCheck}
@@ -784,9 +806,9 @@ const IsimpleProducts = () => {
                 Stop
               </button>
             )}
+            </div>
+            </div>
           </div>
-        </div>
-      </div>
 
       {/* Daftar Produk = Harga Pasar (editable price, expandable = promo yang masuk) */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -810,7 +832,7 @@ const IsimpleProducts = () => {
               'Update semua perubahan'
             )}
           </button>
-        </div>
+      </div>
         <p className="text-sm text-gray-500 mb-4">Ubah harga lalu klik Simpan per baris atau gunakan tombol di atas untuk simpan semua. Expand baris untuk melihat promo yang masuk.</p>
 
         {/* Tab: Paket Harian (< 28 hari), Bulanan (28–30 hari), Sensasi (nama mengandung Sensasi) */}
@@ -891,11 +913,24 @@ const IsimpleProducts = () => {
                               const newExpanded = isExpanded ? null : p.id;
                               setExpandedPriceId(newExpanded);
                               if (newExpanded) {
-                                // Get matching promos langsung, bukan dari state yang belum update
                                 const currentMatchingPromos = getMatchingPromosForProduct(p);
                                 if (currentMatchingPromos.length > 0) {
                                   checkPromosInSuppliers(p.id, currentMatchingPromos);
                                 }
+                                if (projectId) {
+                                  setLoadingPromoCounts(true);
+                                  apiClient.get(`/promo-products/project/${projectId}/counts-by-code`)
+                                    .then((res) => {
+                                      const payload = res.data || {};
+                                      setPromoCountsByCode(payload.counts || payload);
+                                      setTotalNumbersForRate(payload.totalNumbers ?? 0);
+                                    })
+                                    .catch(() => { setPromoCountsByCode({}); setTotalNumbersForRate(0); })
+                                    .finally(() => { setLoadingPromoCounts(false); });
+                                }
+                              } else {
+                                setPromoCountsByCode({});
+                                setTotalNumbersForRate(0);
                               }
                             }}
                             className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -905,7 +940,7 @@ const IsimpleProducts = () => {
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="text"
                             inputMode="numeric"
@@ -914,8 +949,8 @@ const IsimpleProducts = () => {
                             className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-right"
                             placeholder="0"
                           />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="text"
                             value={p.socx_code != null ? String(p.socx_code) : ''}
@@ -923,7 +958,7 @@ const IsimpleProducts = () => {
                             className="w-48 px-2 py-1 border border-gray-300 rounded text-sm font-mono"
                             placeholder="Kode SOCX"
                           />
-                        </td>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="inline-flex items-center gap-1 flex-wrap justify-end">
                             <button
@@ -984,7 +1019,7 @@ const IsimpleProducts = () => {
                               )}
                             </button>
                           </div>
-                        </td>
+                    </td>
                       </tr>
                       {isExpanded && (
                         <tr>
@@ -1005,13 +1040,28 @@ const IsimpleProducts = () => {
                               <p className="text-gray-500 text-sm">Belum ada promo yang cocok. Cek nomor dulu atau naikkan harga pasar.</p>
                             ) : (
                               <div className="overflow-x-auto border border-gray-200 rounded-md">
-                                <table className="min-w-full text-xs">
+                                <table className="min-w-full text-xs" style={{ tableLayout: 'fixed' }}>
+                                  <colgroup>
+                                    <col style={{ minWidth: '140px' }} />
+                                    <col style={{ width: '90px' }} />
+                                    <col style={{ minWidth: '100px' }} />
+                                    <col style={{ minWidth: '180px' }} />
+                                    <col style={{ width: '100px' }} />
+                                    <col style={{ width: '90px' }} />
+                                  </colgroup>
                                   <thead className="bg-gray-100">
                                     <tr>
                                       <th className="px-3 py-2 text-left">Nama Paket (Promo)</th>
                                       <th className="px-3 py-2 text-right">Harga (Rp)</th>
                                       <th className="px-3 py-2 text-left">Tipe</th>
                                       <th className="px-3 py-2 text-left">Kode Produk</th>
+                                      <th
+                                        className="px-3 py-2 text-right cursor-pointer hover:bg-gray-200 select-none"
+                                        onClick={() => setPromoColumnMode((m) => (m === 'angka' ? 'rate' : 'angka'))}
+                                        title="Klik untuk ganti tampilan: Angka / Rate %"
+                                      >
+                                        Rate
+                                      </th>
                                       <th className="px-3 py-2 text-center">Aksi</th>
                                     </tr>
                                   </thead>
@@ -1022,9 +1072,22 @@ const IsimpleProducts = () => {
                                         <td className="px-3 py-2 text-right">{Number(promo.product_amount || 0).toLocaleString('id-ID')}</td>
                                         <td className="px-3 py-2">{promo.product_type || '-'}</td>
                                         <td className="px-3 py-2 font-mono text-gray-700">{promo.product_code || '-'}</td>
+                                        <td className="px-3 py-2 text-right whitespace-nowrap" style={{ minWidth: '90px' }}>
+                                          {loadingPromoCounts ? (
+                                            <span className="text-gray-400">...</span>
+                                          ) : (() => {
+                                            const code = promo.product_code ? String(promo.product_code).trim() : '';
+                                            const count = promoCountsByCode[code] ?? jumlahNomorByProductCode[code] ?? 0;
+                                            if (promoColumnMode === 'rate') {
+                                              const total = totalNumbersForRate || 0;
+                                              return total > 0 ? ((Number(count) / total) * 100).toFixed(1) + '%' : '-';
+                                            }
+                                            return count;
+                                          })()}
+                                        </td>
                                         <td className="px-3 py-2 text-center">
                                           <div className="inline-flex items-center gap-1">
-                                            <button
+                        <button
                                               type="button"
                                               onClick={() => handleCopyPromo(promo)}
                                               className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200"
@@ -1033,8 +1096,8 @@ const IsimpleProducts = () => {
                                               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                 <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9zM9 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2H9z" />
                                               </svg>
-                                            </button>
-                                            <button
+                        </button>
+                        <button
                                               type="button"
                                               onClick={() => handleSavePromoToSocx(promo)}
                                               disabled={savingPromoToSocxId === promo.id}
@@ -1065,14 +1128,14 @@ const IsimpleProducts = () => {
                                                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm-2 4a1 1 0 011-1h2a1 1 0 110 2H5a1 1 0 01-1-1z" clipRule="evenodd" />
                                                 </svg>
                                               )}
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
                             )}
                           </td>
                         </tr>
@@ -1105,7 +1168,7 @@ const IsimpleProducts = () => {
                       Tambah Produk Isimple
                     </h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      Isi jumlah GB dan hari. Backend menyimpan sebagai &quot;Indosat Freedom Internet X GB Y Hari&quot;.
+                      Isi jumlah GB, kategori, dan hari. Jika Sensasi, nama disimpan dengan kata &quot;Sensasi&quot; (contoh: Indosat Freedom Internet Sensasi 50 GB 28 Hari).
                     </p>
                     <form onSubmit={handleCreateProduct} className="mt-4 space-y-4">
                       <div>
@@ -1123,6 +1186,21 @@ const IsimpleProducts = () => {
                         />
                       </div>
                       <div>
+                        <label htmlFor="add-product-category" className="block text-sm font-medium text-gray-700 mb-1">
+                          Kategori <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="add-product-category"
+                          value={newProduct.category || 'harian'}
+                          onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="harian">Harian</option>
+                          <option value="bulanan">Bulanan</option>
+                          <option value="sensasi">Sensasi</option>
+                        </select>
+                      </div>
+                      <div>
                         <label htmlFor="add-product-days" className="block text-sm font-medium text-gray-700 mb-1">
                           Hari <span className="text-red-500">*</span>
                         </label>
@@ -1133,7 +1211,7 @@ const IsimpleProducts = () => {
                           value={newProduct.days}
                           onChange={(e) => setNewProduct({ ...newProduct, days: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Contoh: 30"
+                          placeholder="Contoh: 7 atau 28"
                         />
                       </div>
                       <div>
@@ -1144,26 +1222,30 @@ const IsimpleProducts = () => {
                           id="add-product-price"
                           type="text"
                           inputMode="numeric"
-                          value={newProduct.price != null && newProduct.price !== '' ? String(newProduct.price).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''}
-                          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                          value={
+                            newProduct.price != null && newProduct.price !== ''
+                              ? String(newProduct.price).replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+                              : ''
+                          }
+                          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value.replace(/\D/g, '') })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
                           placeholder="Contoh: 25000"
                         />
                       </div>
                       <div className="flex flex-row-reverse gap-3 pt-2">
-                        <button
+                <button
                           type="submit"
                           className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
-                        >
-                          Simpan
-                        </button>
-                        <button
-                          type="button"
+                >
+                  Simpan
+                </button>
+                <button
+                  type="button"
                           onClick={() => setShowAddModal(false)}
                           className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
-                        >
-                          Batal
-                        </button>
+                >
+                  Batal
+                </button>
                       </div>
                     </form>
                   </div>
